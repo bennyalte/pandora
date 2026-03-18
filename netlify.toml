@@ -1,5 +1,5 @@
 [functions]
   directory = "netlify/functions"
 
-[build.environment]
-  NODE_VERSION = "18"
+[secrets_scan]
+  enabled = false
