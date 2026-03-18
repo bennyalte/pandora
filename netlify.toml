@@ -1,6 +1,5 @@
-
 [functions]
   directory = "netlify/functions"
 
-[build]
-  ignore = "exit 0"
+[build.environment]
+  NODE_VERSION = "18"
