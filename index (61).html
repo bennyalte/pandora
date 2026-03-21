@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>פנדורה ⚡</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+<style>
+:root {
+  --bg: #07070f;
+  --surface: #10101c;
+  --surface2: #181828;
+  --surface3: #1f1f35;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.14);
+  --text: #eeeeff;
+  --text2: #8888bb;
+  --text3: #44445a;
+  --accent: #6c63ff;
+  --accent-light: #9d97ff;
+  --pink: #ff5fa0;
+  --teal: #00d4aa;
+  --amber: #ffb347;
+  --red: #ff4d6d;
+  --radius: 18px;
+  --radius-sm: 11px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);direction:rtl;overflow-x:hidden;}
+
+/* SHELL */
+.shell{max-width:460px;margin:0 auto;min-height:100vh;position:relative;}
+
+/* SCREENS */
+.screen{display:none;padding:24px 18px 60px;min-height:100vh;animation:fadeUp .28s ease;}
+.screen.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* BACKGROUND */
+.bg-orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.1;pointer-events:none;z-index:0;}
+.orb1{width:360px;height:360px;background:var(--accent);top:-120px;right:-120px;}
+.orb2{width:280px;height:280px;background:var(--pink);bottom:80px;left:-80px;}
+.orb3{width:200px;height:200px;background:var(--teal);top:50%;left:50%;transform:translate(-50%,-50%);}
+.screen>*{position:relative;z-index:1;}
+
+/* TYPE */
+h1{font-size:26px;font-weight:900;line-height:1.2;margin-bottom:6px;}
+h2{font-size:20px;font-weight:700;line-height:1.3;margin-bottom:6px;}
+h3{font-size:16px;font-weight:600;margin-bottom:4px;}
+p{font-size:14px;color:var(--text2);line-height:1.7;}
+small{font-size:12px;color:var(--text3);}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.logo-sm{font-size:14px;font-weight:900;color:var(--accent);letter-spacing:.05em;}
+.back{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:7px 13px;font-size:12px;color:var(--text2);cursor:pointer;font-family:'Heebo',sans-serif;transition:.2s;}
+.back:hover{color:var(--text);}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px;}
+.b-purple{background:rgba(108,99,255,.15);color:var(--accent-light);border:1px solid rgba(108,99,255,.3);}
+.b-pink{background:rgba(255,95,160,.15);color:var(--pink);border:1px solid rgba(255,95,160,.3);}
+.b-teal{background:rgba(0,212,170,.15);color:var(--teal);border:1px solid rgba(0,212,170,.3);}
+.b-amber{background:rgba(255,179,71,.15);color:var(--amber);border:1px solid rgba(255,179,71,.3);}
+.b-red{background:rgba(255,77,109,.15);color:var(--red);border:1px solid rgba(255,77,109,.3);}
+.b-live{background:rgba(255,77,109,.2);color:var(--red);border:1px solid rgba(255,77,109,.4);animation:livePulse 1.5s ease infinite;}
+@keyframes livePulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;}
+.card-glow{background:linear-gradient(135deg,rgba(108,99,255,.12),rgba(255,95,160,.08));border-color:rgba(108,99,255,.25);}
+
+/* INPUTS */
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11px;color:var(--text2);margin-bottom:7px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;}
+input[type=text],input[type=email],input[type=password],textarea,select{
+  width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);font-family:'Heebo',sans-serif;font-size:14px;
+  transition:.2s;direction:rtl;
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,.12);}
+textarea{resize:none;height:80px;line-height:1.6;}
+.code-input{text-align:center;font-family:'Space Mono',monospace;font-size:26px;letter-spacing:7px;font-weight:700;}
+
+/* BUTTONS */
+.btn{display:block;width:100%;padding:13px 18px;border-radius:var(--radius-sm);font-family:'Heebo',sans-serif;font-size:15px;font-weight:700;cursor:pointer;text-align:center;transition:.2s;border:none;margin-top:8px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#5a52e0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(108,99,255,.35);}
+.btn-pink{background:var(--pink);color:#fff;}
+.btn-pink:hover{background:#e54d8a;transform:translateY(-1px);box-shadow:0 8px 24px rgba(255,95,160,.35);}
+.btn-teal{background:var(--teal);color:#07070f;}
+.btn-teal:hover{background:#00bfa0;}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-outline:hover{background:var(--surface2);color:var(--text);}
+.btn-sm{padding:8px 14px;font-size:13px;width:auto;display:inline-block;margin-top:0;}
+.btn-danger{background:var(--red);color:#fff;}
+
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px;}
+.chip{padding:6px 13px;border-radius:100px;font-size:13px;border:1px solid var(--border2);color:var(--text2);cursor:pointer;transition:.2s;background:transparent;font-family:'Heebo',sans-serif;}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip.on{background:rgba(108,99,255,.18);border-color:var(--accent);color:var(--accent);font-weight:700;}
+
+/* TIMER */
+.timer-wrap{text-align:center;margin:20px 0;}
+.timer-num{font-family:'Space Mono',monospace;font-size:68px;font-weight:700;line-height:1;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.timer-num.urgent{background:linear-gradient(135deg,var(--red),var(--amber));-webkit-background-clip:text;background-clip:text;}
+.timer-lbl{font-size:12px;color:var(--text3);margin-top:5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
+
+/* CODE BOX */
+.code-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:22px;text-align:center;margin:14px 0;}
+.code-val{font-family:'Space Mono',monospace;font-size:42px;font-weight:700;letter-spacing:10px;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+/* CHALLENGE CARD */
+.challenge-wrap{background:linear-gradient(135deg,rgba(108,99,255,.15),rgba(255,95,160,.1));border:1px solid rgba(108,99,255,.3);border-radius:var(--radius);padding:22px;margin:14px 0;}
+.challenge-lbl{font-size:11px;color:var(--accent-light);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;}
+.challenge-txt{font-size:17px;font-weight:600;line-height:1.65;color:var(--text);}
+
+/* MODE CARDS (3 teacher options) */
+.mode-grid{display:flex;flex-direction:column;gap:10px;margin:14px 0;}
+.mode-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer;transition:.25s;text-align:right;}
+.mode-card:hover{border-color:var(--accent);background:var(--surface2);}
+.mode-card.selected{border-color:var(--accent);background:rgba(108,99,255,.1);}
+.mode-icon{font-size:26px;margin-bottom:8px;}
+.mode-title{font-size:15px;font-weight:700;margin-bottom:3px;}
+.mode-desc{font-size:13px;color:var(--text2);}
+
+/* STEP LIST */
+.steps{list-style:none;}
+.step{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;}
+.step-n{width:22px;height:22px;border-radius:50%;background:rgba(108,99,255,.2);color:var(--accent);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.step-t{font-size:14px;color:var(--text2);line-height:1.6;}
+
+/* PROGRESS */
+.prog-item{margin-bottom:12px;}
+.prog-header{display:flex;justify-content:space-between;margin-bottom:5px;}
+.prog-name{font-size:14px;font-weight:600;}
+.prog-status{font-size:12px;color:var(--text2);}
+.prog-track{height:5px;background:var(--surface2);border-radius:100px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:100px;transition:width 1.5s ease;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat{background:var(--surface2);border-radius:var(--radius-sm);padding:14px;}
+.stat-n{font-size:26px;font-weight:900;}
+.stat-l{font-size:11px;color:var(--text2);margin-top:3px;}
+
+/* AVATAR */
+.av{width:34px;height:34px;border-radius:50%;background:rgba(108,99,255,.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0;}
+.av-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.av-name{font-size:14px;font-weight:500;flex:1;}
+.av-tag{font-size:12px;color:var(--text3);}
+
+/* WAITING DOTS */
+.w-avs{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:18px 0;}
+.w-av{width:40px;height:40px;border-radius:50%;background:var(--surface2);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text3);}
+.w-av.joined{background:rgba(108,99,255,.18);border-color:var(--accent);color:var(--accent);}
+
+/* LOADING DOTS */
+.dots{display:inline-flex;gap:5px;}
+.dot{width:7px;height:7px;border-radius:50%;animation:dotPulse 1.2s ease infinite;}
+.dot:nth-child(1){background:var(--accent);}
+.dot:nth-child(2){background:var(--pink);animation-delay:.2s;}
+.dot:nth-child(3){background:var(--teal);animation-delay:.4s;}
+@keyframes dotPulse{0%,100%{opacity:.3;transform:scale(.8);}50%{opacity:1;transform:scale(1);}}
+
+/* AI LOADER BAR */
+.ai-load-box{background:var(--surface2);border-radius:var(--radius);padding:22px;text-align:center;margin:14px 0;}
+.ai-bar{height:3px;background:var(--border);border-radius:100px;overflow:hidden;margin:14px 0 7px;}
+.ai-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--pink));border-radius:100px;width:0%;transition:width 2.8s ease;}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:36px 20px;text-align:center;cursor:pointer;transition:.2s;margin:14px 0;}
+.upload-zone:hover{border-color:var(--accent);background:rgba(108,99,255,.05);}
+
+/* VOTE */
+.vote-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
+.vote-video{height:130px;background:var(--surface2);display:flex;align-items:center;justify-content:center;}
+.vote-foot{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;}
+
+/* SCORE */
+.score-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.score-lbl{font-size:14px;font-weight:600;min-width:70px;}
+.score-track{flex:1;height:7px;background:var(--surface2);border-radius:100px;overflow:hidden;}
+.score-fill{height:100%;border-radius:100px;transition:width 1.5s ease;}
+.score-pct{font-size:12px;font-weight:700;min-width:34px;text-align:left;}
+
+/* WINNER */
+.winner{text-align:center;padding-top:36px;}
+.trophy{font-size:68px;display:block;margin-bottom:14px;animation:trophyBounce 1s ease infinite alternate;}
+@keyframes trophyBounce{from{transform:scale(1) rotate(-3deg);}to{transform:scale(1.1) rotate(3deg);}}
+
+/* SECTION LABEL */
+.sec-lbl{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}
+
+/* ROLE GRID */
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px;}
+.role-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 14px;text-align:center;cursor:pointer;transition:.25s;}
+.role-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 12px 32px rgba(108,99,255,.2);}
+.role-icon{font-size:30px;margin-bottom:9px;}
+.role-title{font-size:15px;font-weight:700;margin-bottom:3px;}
+.role-desc{font-size:12px;color:var(--text2);}
+
+/* DIVIDER */
+.div{height:1px;background:var(--border);margin:18px 0;}
+
+/* HIDDEN SECTION */
+.mode-section{display:none;margin-top:12px;}
+.mode-section.show{display:block;}
+
+/* NOTIFICATION */
+.notif{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);border-radius:100px;padding:10px 20px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:.3s;white-space:nowrap;}
+.notif.show{opacity:1;}
+
+/* ERROR */
+.err{font-size:12px;color:var(--red);margin-top:6px;display:none;}
+.err.show{display:block;}
+
+/* CONFIG NOTE */
+.config-box{background:rgba(255,179,71,.08);border:1px solid rgba(255,179,71,.25);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;font-size:13px;line-height:1.7;color:var(--amber);}
+.config-box code{font-family:'Space Mono',monospace;font-size:11px;background:rgba(255,179,71,.15);padding:2px 6px;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+<div class="bg-orb orb3"></div>
+
+<!-- Guernica background -->
+<svg style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.35;" viewBox="0 0 460 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+  <!-- fragmented horse head top right -->
+  <g stroke="#ccc" stroke-width="1.2" fill="none">
+    <path d="M320 40 L370 20 L390 50 L360 80 L330 70 Z"/>
+    <path d="M360 20 L380 10 L400 30 L375 45"/>
+    <path d="M370 55 L385 48 L395 60 L378 68"/>
+    <!-- nostrils -->
+    <ellipse cx="388" cy="35" rx="5" ry="3" fill="#aaa" opacity="0.5"/>
+    <!-- eye -->
+    <circle cx="365" cy="38" r="4" stroke="#ccc" stroke-width="1"/>
+    <circle cx="365" cy="38" r="1.5" fill="#ccc" opacity="0.6"/>
+    <!-- jagged teeth -->
+    <path d="M350 72 L358 80 L365 72 L372 80 L380 72"/>
+  </g>
+
+  <!-- screaming face fragment left -->
+  <g stroke="#bbb" stroke-width="1" fill="none" transform="translate(10, 180)">
+    <path d="M20 0 L60 10 L70 50 L40 80 L0 60 Z"/>
+    <path d="M25 15 L45 20 L50 40 L30 55 L10 40 Z"/>
+    <!-- open mouth -->
+    <path d="M15 45 Q30 65 50 45" stroke-width="1.5"/>
+    <path d="M20 45 L50 45"/>
+    <!-- teeth -->
+    <path d="M20 45 L25 52 L30 45 L35 52 L40 45 L45 52 L50 45"/>
+    <!-- eye left -->
+    <ellipse cx="22" cy="25" rx="5" ry="7"/>
+    <circle cx="22" cy="25" r="2" fill="#bbb" opacity="0.5"/>
+    <!-- torn edge -->
+    <path d="M0 0 L-15 20 L5 35 L-10 60"/>
+  </g>
+
+  <!-- bull silhouette fragment top left -->
+  <g stroke="#aaa" stroke-width="1.2" fill="none" transform="translate(0, 30)">
+    <path d="M10 80 L50 60 L80 70 L90 100 L60 120 L20 110 Z"/>
+    <!-- horns -->
+    <path d="M50 60 L30 30 L55 50"/>
+    <path d="M70 65 L90 35 L72 58"/>
+    <!-- eye -->
+    <circle cx="55" cy="80" r="5"/>
+    <circle cx="55" cy="80" r="2" fill="#aaa" opacity="0.5"/>
+    <!-- tail -->
+    <path d="M10 95 Q-10 110 5 130 Q15 150 0 160"/>
+  </g>
+
+  <!-- fragmented hand / fist bottom left -->
+  <g stroke="#ccc" stroke-width="1" fill="none" transform="translate(5, 680)">
+    <path d="M20 80 L60 60 L80 80 L70 120 L30 130 L10 100 Z"/>
+    <!-- fingers -->
+    <path d="M30 60 L25 20 L35 15 L42 55"/>
+    <path d="M42 58 L40 15 L50 12 L55 55"/>
+    <path d="M55 58 L58 18 L68 20 L65 58"/>
+    <path d="M65 60 L72 25 L80 30 L75 62"/>
+    <!-- thumb -->
+    <path d="M20 80 L-5 65 L0 50 L18 70"/>
+    <!-- knuckle lines -->
+    <path d="M28 55 Q35 50 42 55"/>
+    <path d="M42 55 Q49 50 56 55"/>
+    <path d="M56 55 Q63 50 68 55"/>
+  </g>
+
+  <!-- lamp / eye of god - center top -->
+  <g stroke="#ddd" stroke-width="1.2" fill="none" transform="translate(180, 20)">
+    <!-- diamond eye shape -->
+    <path d="M50 0 L90 30 L50 60 L10 30 Z"/>
+    <ellipse cx="50" cy="30" rx="15" ry="10"/>
+    <circle cx="50" cy="30" r="5" fill="#ccc" opacity="0.4"/>
+    <!-- rays -->
+    <path d="M50 0 L50 -20"/>
+    <path d="M90 30 L110 30"/>
+    <path d="M50 60 L50 80"/>
+    <path d="M10 30 L-10 30"/>
+    <path d="M78 8 L92 -5"/>
+    <path d="M78 52 L92 65"/>
+    <path d="M22 8 L8 -5"/>
+    <path d="M22 52 L8 65"/>
+    <!-- hanging cord -->
+    <path d="M50 80 L45 110 L55 130 L48 160"/>
+  </g>
+
+  <!-- broken figure / body fragment right side -->
+  <g stroke="#bbb" stroke-width="1" fill="none" transform="translate(340, 350)">
+    <path d="M30 0 L70 20 L80 70 L50 100 L10 80 L0 30 Z"/>
+    <!-- rib-like lines -->
+    <path d="M15 40 L65 50"/>
+    <path d="M12 55 L62 65"/>
+    <path d="M15 70 L58 78"/>
+    <!-- arm reaching up -->
+    <path d="M70 20 L90 -20 L100 -30"/>
+    <path d="M95 -35 L105 -25 L98 -15"/>
+  </g>
+
+  <!-- fallen figure bottom right -->
+  <g stroke="#aaa" stroke-width="1" fill="none" transform="translate(280, 750)">
+    <path d="M0 50 L80 30 L120 60 L100 100 L20 110 Z"/>
+    <!-- head -->
+    <ellipse cx="110" cy="45" rx="18" ry="14"/>
+    <circle cx="115" cy="42" r="4"/>
+    <!-- open mouth screaming -->
+    <path d="M100 52 Q112 65 125 52"/>
+    <path d="M102 52 L124 52"/>
+    <!-- arm raised -->
+    <path d="M80 30 L60 0 L50 -10"/>
+    <!-- broken sword/spear -->
+    <path d="M0 80 L-20 60 L-10 50 L15 75"/>
+    <path d="M-15 55 L-25 45"/>
+  </g>
+
+  <!-- additional fragments -->
+
+  <!-- horse body torso center -->
+  <g stroke="#ccc" stroke-width="1.1" fill="none" transform="translate(150, 100)">
+    <path d="M0 60 L50 30 L100 50 L110 100 L70 130 L20 120 Z"/>
+    <path d="M50 30 L55 0 L70 5 L65 35"/>
+    <!-- spine line -->
+    <path d="M20 80 L90 70"/>
+    <path d="M15 95 L85 88"/>
+    <!-- leg fragment -->
+    <path d="M20 120 L10 160 L0 180 L15 182 L25 160 L30 125"/>
+    <path d="M70 130 L75 170 L65 190 L80 192 L88 168 L82 132"/>
+  </g>
+
+  <!-- screaming open mouth close-up, top center -->
+  <g stroke="#ddd" stroke-width="1.3" fill="none" transform="translate(190, 300)">
+    <path d="M0 0 L80 10 L85 60 L45 80 L-5 55 Z"/>
+    <!-- huge open mouth -->
+    <path d="M10 35 Q40 65 75 38"/>
+    <path d="M10 35 L75 38"/>
+    <!-- many teeth -->
+    <path d="M12 35 L15 48 L20 35 L25 48 L30 35 L35 48 L40 35 L45 48 L50 35 L55 48 L60 35 L65 48 L70 35"/>
+    <!-- tongue -->
+    <path d="M30 48 Q40 60 55 50" stroke-width="1.5"/>
+    <!-- eyes wide -->
+    <ellipse cx="18" cy="20" rx="7" ry="9"/>
+    <circle cx="18" cy="20" r="3" fill="#ddd" opacity="0.5"/>
+    <ellipse cx="62" cy="22" rx="7" ry="9"/>
+    <circle cx="62" cy="22" r="3" fill="#ddd" opacity="0.5"/>
+  </g>
+
+  <!-- dead bird / dove fragment -->
+  <g stroke="#bbb" stroke-width="1" fill="none" transform="translate(310, 120)">
+    <path d="M0 40 L40 20 L80 35 L75 65 L35 70 Z"/>
+    <!-- wing broken -->
+    <path d="M40 20 L20 0 L10 15 L35 30"/>
+    <path d="M60 25 L80 5 L90 20 L68 32"/>
+    <!-- beak open -->
+    <path d="M75 48 L95 42 L93 52 Z"/>
+    <!-- eye -->
+    <circle cx="68" cy="45" r="3"/>
+    <!-- feather lines -->
+    <path d="M10 50 L70 40"/>
+    <path d="M8 58 L68 50"/>
+  </g>
+
+  <!-- spear / broken lance diagonal -->
+  <g stroke="#999" stroke-width="1.2" fill="none" transform="translate(20, 250)">
+    <path d="M0 0 L120 180"/>
+    <path d="M115 170 L130 160 L125 185 Z"/>
+    <!-- crack in middle -->
+    <path d="M55 82 L65 88 L58 98"/>
+  </g>
+
+  <!-- figure with arms raised right side -->
+  <g stroke="#ccc" stroke-width="1" fill="none" transform="translate(390, 180)">
+    <!-- torso -->
+    <path d="M10 50 L50 40 L60 100 L30 120 L0 95 Z"/>
+    <!-- head -->
+    <ellipse cx="30" cy="30" rx="20" ry="22"/>
+    <!-- arms raised in horror -->
+    <path d="M10 60 L-20 20 L-30 10"/>
+    <path d="M50 55 L75 15 L85 5"/>
+    <!-- hands -->
+    <path d="M-30 10 L-40 0 L-35 15 L-25 8"/>
+    <path d="M85 5 L95 -5 L90 10 L80 5"/>
+    <!-- face lines -->
+    <path d="M18 25 L22 38"/>
+    <path d="M38 25 L42 38"/>
+    <path d="M20 42 Q30 50 42 42"/>
+  </g>
+
+  <!-- mother holding child fragment bottom center -->
+  <g stroke="#ccc" stroke-width="1.1" fill="none" transform="translate(160, 650)">
+    <!-- mother body -->
+    <path d="M20 0 L70 10 L80 80 L50 110 L10 90 L0 20 Z"/>
+    <!-- child head small -->
+    <ellipse cx="65" cy="25" rx="15" ry="13"/>
+    <circle cx="68" cy="22" r="3"/>
+    <!-- child limp arm -->
+    <path d="M75 35 L95 55 L90 65"/>
+    <!-- mother head tilted back -->
+    <ellipse cx="25" cy="-15" rx="18" ry="16" transform="rotate(-20,25,-15)"/>
+    <!-- mouth open screaming -->
+    <path d="M15 -10 Q25 0 38 -8"/>
+    <!-- tears -->
+    <path d="M12 -5 L8 15"/>
+    <path d="M35 -5 L32 15"/>
+  </g>
+
+  <!-- blood red accents -->
+  <g opacity="0.6">
+    <path d="M60 200 L80 240 L55 260 L40 230 Z" fill="#8b0000" stroke="#cc0000" stroke-width="1"/>
+    <path d="M350 400 L365 430 L345 445 L332 418 Z" fill="#8b0000" stroke="#cc0000" stroke-width="1"/>
+    <path d="M200 700 Q215 720 205 740 Q195 720 200 700 Z" fill="#8b0000" stroke="none"/>
+    <path d="M420 300 Q432 318 425 335 Q415 318 420 300 Z" fill="#8b0000" stroke="none"/>
+    <path d="M100 580 L118 610 L95 628 L80 598 Z" fill="#6b0000" stroke="#aa0000" stroke-width="0.8"/>
+  </g>
+
+  <!-- scattered geometric shards -->
+  <g stroke="#777" stroke-width="0.7" fill="none" opacity="0.8">
+    <path d="M420 80 L450 65 L455 90 L425 100 Z"/>
+    <path d="M30 150 L55 138 L60 158 L35 165 Z"/>
+    <path d="M200 550 L225 538 L230 560 L205 568 Z"/>
+    <path d="M320 480 L348 468 L352 492 L325 498 Z"/>
+    <path d="M100 750 L128 738 L133 762 L105 768 Z"/>
+    <path d="M420 700 L448 690 L450 712 L422 718 Z"/>
+    <!-- diagonal cuts -->
+    <path d="M0 350 L40 310"/>
+    <path d="M420 350 L460 320"/>
+    <path d="M180 820 L220 790"/>
+    <path d="M300 130 L340 100"/>
+    <path d="M120 200 L155 175"/>
+    <path d="M350 750 L385 725"/>
+  </g>
+
+  <!-- eye isolated floating center right -->
+  <g stroke="#ddd" stroke-width="1.2" fill="none" transform="translate(360, 550)">
+    <path d="M0 20 Q25 0 50 20 Q25 40 0 20 Z"/>
+    <circle cx="25" cy="20" r="8"/>
+    <circle cx="25" cy="20" r="3" fill="#ddd" opacity="0.6"/>
+    <!-- lashes -->
+    <path d="M5 10 L0 2"/>
+    <path d="M15 5 L13 -3"/>
+    <path d="M25 3 L25 -5"/>
+    <path d="M35 5 L37 -3"/>
+    <path d="M45 10 L50 2"/>
+  </g>
+  <g stroke="#888" stroke-width="0.8" fill="none" opacity="0.6">
+    <path d="M200 300 L230 280 L250 310 L220 330 Z"/>
+    <path d="M100 500 L140 490 L145 520 L105 525 Z"/>
+    <path d="M350 200 L380 190 L385 215 L352 220 Z"/>
+    <path d="M50 400 L80 385 L88 410 L55 420 Z"/>
+    <path d="M380 600 L410 588 L415 615 L382 622 Z"/>
+    <!-- diagonal slashes -->
+    <path d="M150 150 L200 120"/>
+    <path d="M250 450 L290 420"/>
+    <path d="M60 600 L100 570"/>
+    <path d="M370 450 L410 430"/>
+  </g>
+
+  <!-- crying woman fragment center-left -->
+  <g stroke="#ccc" stroke-width="1.1" fill="none" transform="translate(80, 480)">
+    <path d="M30 0 L65 15 L70 60 L40 85 L5 65 L0 20 Z"/>
+    <!-- eyes with tears -->
+    <ellipse cx="20" cy="25" rx="6" ry="8"/>
+    <path d="M17 33 L14 50 L20 48 L18 65"/>
+    <ellipse cx="48" cy="28" rx="6" ry="8"/>
+    <path d="M45 36 L42 52 L48 50 L46 68"/>
+    <!-- open mouth -->
+    <path d="M15 60 Q32 75 58 62"/>
+    <!-- handkerchief / cloth -->
+    <path d="M5 65 L-20 80 L-15 100 L10 90"/>
+    <path d="M-18 82 L-25 95 L-12 98"/>
+  </g>
+</svg>
+<div class="notif" id="notif"></div>
+
+<div class="shell">
+
+<!-- ══════════════ SETUP ══════════════ -->
+<div class="screen" id="setup">
+  <div style="padding-top:40px;text-align:center;">
+    <div style="font-size:52px;font-weight:900;color:var(--accent);margin-bottom:4px;">פנדורה <span style="color:var(--amber);">⚡</span></div>
+    <p style="margin-bottom:30px;max-width:300px;margin-inline:auto;">נותר דבר אחד — הכנס את מפתח Claude</p>
+  </div>
+  <div class="config-box">
+    <strong>🤖 Claude API Key</strong><br><br>
+    פתח את <strong>console.anthropic.com</strong><br>
+    צור חשבון חינמי → לחץ <strong>API Keys</strong> → <strong>Create Key</strong><br>
+    העתק והכנס כאן
+  </div>
+  <div class="field"><label>Claude API Key</label><input type="text" id="cfg-claudeKey" placeholder="sk-ant-..." /></div>
+  <div class="err" id="cfg-err">אנא הכנס את המפתח</div>
+  <button class="btn btn-primary" onclick="saveClaudeKey()">התחל ⚡</button>
+  <div style="text-align:center;margin-top:14px;">
+    <span style="font-size:12px;color:var(--text3);cursor:pointer;" onclick="go('home')">המשך בלי Claude (ללא יצירת אתגרים)</span>
+  </div>
+</div>
+
+<!-- ══════════════ HOME ══════════════ -->
+<div class="screen active" id="home">
+  <div style="padding-top:80px;text-align:center;">
+    <div style="font-size:56px;font-weight:900;color:var(--accent);margin-bottom:6px;">פנדורה <span style="color:var(--amber);">⚡</span></div>
+    <p style="margin-bottom:48px;max-width:280px;margin-inline:auto;">יצירתיות, שיתוף פעולה ולחץ זמן — הנוסחה שמדליקה תלמידים</p>
+    <button class="btn btn-primary" onclick="go('teacher-login')" style="max-width:260px;margin:0 auto;font-size:17px;padding:16px;">כניסה למורה ←</button>
+    <div style="margin-top:24px;">
+      <span style="font-size:12px;color:var(--text3);cursor:pointer;" onclick="go('setup')">⚙️ הגדרות</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TEACHER LOGIN ══════════════ -->
+<div class="screen" id="teacher-login">
+  <div class="topbar"><button class="back" onclick="go('home')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-purple">👩‍🏫 מורה</span>
+  <h2 style="margin-bottom:4px;">כניסה</h2>
+  <p style="margin-bottom:20px;">הכנס את שמך וסיסמה אישית</p>
+  <div class="field"><label>שמך</label><input type="text" id="t-email" placeholder="למשל: בן" /></div>
+  <div class="field"><label>סיסמה</label><input type="password" id="t-pass" placeholder="בחר סיסמה" /></div>
+  <div class="err" id="login-err"></div>
+  <button class="btn btn-primary" onclick="teacherLogin()">כניסה ←</button>
+</div>
+
+<!-- ══════════════ TEACHER REGISTER ══════════════ -->
+<div class="screen" id="teacher-register">
+  <div class="topbar"><button class="back" onclick="go('teacher-login')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-purple">👩‍🏫 הרשמה</span>
+  <h2>צור חשבון מורה</h2>
+  <p style="margin-bottom:20px;">פעם אחת בלבד</p>
+  <div class="field"><label>שם מלא</label><input type="text" id="t-name" placeholder="שם פרטי ומשפחה" /></div>
+  <div class="field"><label>בית ספר</label><input type="text" id="t-school" placeholder="שם בית הספר" /></div>
+  <div class="field"><label>אימייל</label><input type="email" id="t-reg-email" placeholder="your@email.com" /></div>
+  <div class="field"><label>סיסמה</label><input type="password" id="t-reg-pass" placeholder="לפחות 6 תווים" /></div>
+  <div class="err" id="reg-err"></div>
+  <button class="btn btn-primary" onclick="teacherRegister()">הרשמה ←</button>
+</div>
+
+<!-- ══════════════ TEACHER PROFILE ══════════════ -->
+<div class="screen" id="teacher-profile">
+  <div class="topbar"><button class="back" onclick="go('teacher-dashboard')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-purple">👩‍🏫 פרופיל מקצועי</span>
+  <h2>ספר לנו עליך</h2>
+  <p style="margin-bottom:20px;">זה יעזור ל-AI לייצר אתגרים מותאמים</p>
+  <div class="field"><label>מקצוע / מקצועות</label><input type="text" id="p-subject" placeholder="לדוגמה: היסטוריה, אזרחות" /></div>
+  <div class="field">
+    <label>כיתות שאתה מלמד</label>
+    <div class="chips">
+      <button class="chip" onclick="toggleChip(this)">גן</button>
+      <button class="chip" onclick="toggleChip(this)">א׳-ב׳</button>
+      <button class="chip" onclick="toggleChip(this)">ג׳-ד׳</button>
+      <button class="chip" onclick="toggleChip(this)">ה׳-ו׳</button>
+      <button class="chip" onclick="toggleChip(this)">ז׳-ח׳</button>
+      <button class="chip" onclick="toggleChip(this)">ט׳-י׳</button>
+      <button class="chip on" onclick="toggleChip(this)">י״א-י״ב</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>מה חשוב לך לפתח?</label>
+    <div class="chips">
+      <button class="chip" onclick="toggleChip(this)">יצירתיות</button>
+      <button class="chip" onclick="toggleChip(this)">שיתוף פעולה</button>
+      <button class="chip" onclick="toggleChip(this)">ביטוי עצמי</button>
+      <button class="chip" onclick="toggleChip(this)">חשיבה ביקורתית</button>
+      <button class="chip" onclick="toggleChip(this)">מנהיגות</button>
+      <button class="chip" onclick="toggleChip(this)">אמפתיה</button>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="saveProfile()">שמור והמשך ←</button>
+</div>
+
+<!-- ══════════════ TEACHER DASHBOARD ══════════════ -->
+<div class="screen" id="teacher-dashboard">
+  <div class="topbar">
+    <div class="logo-sm">פנדורה ⚡</div>
+    <span style="font-size:13px;color:var(--text2);" id="dash-greeting">שלום 👋</span>
+  </div>
+  <h2 style="margin-bottom:4px;">לוח הבקרה</h2>
+  <p style="margin-bottom:20px;">מה נעשה היום?</p>
+  <div id="claude-status" style="font-size:12px;margin-bottom:14px;padding:8px 12px;border-radius:8px;background:var(--surface2);"></div>
+  <div class="stats-grid">
+    <div class="stat"><div class="stat-n" style="color:var(--accent);" id="dash-sessions">0</div><div class="stat-l">שיעורים</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--pink);" id="dash-students">0</div><div class="stat-l">תלמידים</div></div>
+  </div>
+  <button class="btn btn-primary" onclick="go('teacher-create-room')" style="margin-bottom:8px;">+ צור חדר חדש</button>
+  <button class="btn btn-outline" onclick="openLibrary()" style="margin-bottom:8px;">📚 מאגר אתגרים קהילתי</button>
+  <button class="btn btn-outline" onclick="go('teacher-profile')">עדכן פרופיל</button>
+  <button class="btn btn-outline" onclick="teacherLogout()" style="margin-top:8px;">התנתק</button>
+</div>
+
+<!-- ══════════════ COMMUNITY LIBRARY ══════════════ -->
+<div class="screen" id="teacher-library">
+  <div class="topbar"><button class="back" onclick="go('teacher-dashboard')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-teal">📚 מאגר קהילתי</span>
+  <h2 style="margin-bottom:4px;">אתגרים של מורים</h2>
+  <p style="margin-bottom:14px;">סנן וחפש אתגרים שעבדו</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+    <div class="field" style="margin-bottom:0;">
+      <label>מקצוע</label>
+      <input type="text" id="lib-subject" placeholder="לדוגמה: תנ״ך">
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label>גיל</label>
+      <select id="lib-grade" style="width:100%;background:var(--surface2);color:var(--text1);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius-sm);padding:10px;font-size:14px;">
+        <option value="">כל הגילאים</option>
+        <option>גן</option>
+        <option>א׳-ב׳</option>
+        <option>ג׳-ד׳</option>
+        <option>ה׳-ו׳</option>
+        <option>ז׳-ח׳</option>
+        <option>ט׳-י׳</option>
+        <option>י״א-י״ב</option>
+      </select>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="loadLibrary()" style="margin-bottom:14px;">🔍 חפש אתגרים</button>
+
+  <div id="library-results">
+    <div style="text-align:center;padding:30px;color:var(--text3);">טוען אתגרים...</div>
+  </div>
+</div>
+
+<!-- ══════════════ TEACHER CREATE ROOM ══════════════ -->
+<div class="screen" id="teacher-create-room">
+  <div class="topbar"><button class="back" onclick="go('teacher-dashboard')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-teal">⚙️ הגדרות שיעור</span>
+  <h2 style="margin-bottom:4px;">צור חדר</h2>
+  <p style="margin-bottom:20px;">בחר איך לייצר את האתגר</p>
+
+  <!-- 3 MODE CARDS -->
+  <div class="mode-grid">
+    <div class="mode-card selected" id="mode-1" onclick="selectMode(1)">
+      <div class="mode-icon">✍️</div>
+      <div class="mode-title">אני כותב אתגר</div>
+      <div class="mode-desc">אתה כותב אתגר מלא — כל הכיתה מקבלת אותו דבר</div>
+    </div>
+    <div class="mode-card" id="mode-2" onclick="selectMode(2)">
+      <div class="mode-icon">🤝</div>
+      <div class="mode-title">שיתוף פעולה עם AI</div>
+      <div class="mode-desc">אתה נותן נושא ומילות מפתח — ה-AI מייצר, אתה בוחר ועורך לפני שליחה</div>
+    </div>
+    <div class="mode-card" id="mode-3" onclick="selectMode(3)">
+      <div class="mode-icon">🎲</div>
+      <div class="mode-title">הפתע אותי</div>
+      <div class="mode-desc">ה-AI מייצר אתגר לגמרי לבד לפי הנושא והפרופיל שלך</div>
+    </div>
+    <div class="mode-card" id="mode-4" onclick="selectMode(4)">
+      <div class="mode-icon">🎯</div>
+      <div class="mode-title">ממוקד חומר</div>
+      <div class="mode-desc">אתגר שמתרגל חומר ספציפי — מושגים, מיומנויות, הכנה לבגרות</div>
+    </div>
+  </div>
+
+  <!-- SHARED FIELDS -->
+  <div class="field"><label>נושא השיעור</label><input type="text" id="room-topic" placeholder="לדוגמה: זהות ושייכות" /></div>
+
+  <!-- MODE 1 EXTRA -->
+  <div class="mode-section show" id="ms-1">
+    <div class="field">
+      <label>האתגר שכתבת</label>
+      <textarea id="teacher-challenge" placeholder="כתוב כאן את האתגר המלא. כל הכיתה תקבל בדיוק את הטקסט הזה."></textarea>
+    </div>
+  </div>
+
+  <!-- MODE 2 EXTRA -->
+  <div class="mode-section" id="ms-2">
+    <div class="field">
+      <label>מילות מפתח</label>
+      <textarea id="room-keywords" placeholder="לדוגמה: קהילה, שינוי חברתי, נקודת מבט, זהות"></textarea>
+    </div>
+  </div>
+
+  <!-- MODE 4 EXTRA -->
+  <div class="mode-section" id="ms-4">
+    <div class="field">
+      <label>מה צריך לתרגל?</label>
+      <textarea id="room-drill" placeholder="לדוגמה: פעלים בזמן עבר באנגלית, נוסחת השורשים, מושגי יסוד בגנטיקה"></textarea>
+    </div>
+  </div>
+
+  <!-- SHARED SETTINGS -->
+  <div class="field">
+    <label>סוג תוצר</label>
+    <div class="chips">
+      <button class="chip on" onclick="toggleChip(this)">וידאו</button>
+      <button class="chip" onclick="toggleChip(this)">בנייה פיזית</button>
+      <button class="chip" onclick="toggleChip(this)">נאום</button>
+      <button class="chip" onclick="toggleChip(this)">ציור / מפה</button>
+      <button class="chip" onclick="toggleChip(this)">שיחה בכיתה</button>
+      <button class="chip" onclick="toggleChip(this)">AI בוחר</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>משך האתגר</label>
+    <div class="chips">
+      <button class="chip" onclick="toggleChip(this)">3 דק׳</button>
+      <button class="chip on" id="dur-chip" onclick="toggleChip(this)">5 דק׳</button>
+      <button class="chip" onclick="toggleChip(this)">8 דק׳</button>
+      <button class="chip" onclick="toggleChip(this)">10 דק׳</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>גודל קבוצות</label>
+    <div class="chips">
+      <button class="chip" onclick="toggleChip(this)">2</button>
+      <button class="chip" onclick="toggleChip(this)">3</button>
+      <button class="chip on" onclick="toggleChip(this)">4–5</button>
+      <button class="chip" onclick="toggleChip(this)">6–7</button>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="createRoom()">צור חדר ←</button>
+</div>
+
+<!-- ══════════════ TEACHER WAITING ══════════════ -->
+<div class="screen" id="teacher-waiting">
+  <div class="topbar"><button class="back" onclick="go('teacher-create-room')">← חזרה</button><span class="badge b-teal" style="margin:0;">פתוח</span></div>
+  <h2 style="margin-bottom:4px;">כתוב על הלוח</h2>
+  <div class="code-box">
+    <div style="font-size:10px;color:var(--text3);margin-bottom:6px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">קוד חדר</div>
+    <div class="code-val" id="room-code-display">------</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px;">התלמידים מזינים קוד זה</div>
+  </div>
+  <div class="card">
+    <div class="sec-lbl">קישור לתלמידים</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">שלח את הקישור הזה לוואטסאפ של הכיתה</div>
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--accent);font-family:'Space Mono',monospace;margin-bottom:10px;word-break:break-all;" id="student-link-display">טוען...</div>
+    <button class="btn btn-teal btn-sm" onclick="shareStudentLink()" style="width:100%;margin-top:0;">שתף קישור 📤</button>
+  </div>
+  <div class="card">
+    <div class="sec-lbl">תלמידים שהצטרפו — <span id="joined-count">0</span></div>
+    <div class="w-avs" id="joined-avatars"></div>
+    <div style="text-align:center;">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <div style="font-size:12px;color:var(--text3);margin-top:7px;">ממתין לתלמידים...</div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="sendLibraryChallenge()">שלח אתגר מהמאגר ←</button>
+  <button class="btn btn-outline" onclick="generateAndPreview()" style="margin-top:8px;">🤖 צור אתגר חדש</button>
+  <button class="btn btn-outline" onclick="closeRoom()" style="margin-top:8px;">סגור חדר</button>
+</div>
+
+<!-- ══════════════ TEACHER PREVIEW ══════════════ -->
+<div class="screen" id="teacher-preview">
+  <div class="topbar"><button class="back" onclick="go('teacher-waiting')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-amber">🤖 האתגר נוצר</span>
+  <h2 style="margin-bottom:4px;">תצוגה מקדימה</h2>
+  <p style="margin-bottom:14px;">בדוק לפני שאתה שולח לכולם</p>
+
+  <div class="ai-load-box" id="ai-loader">
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div style="font-size:13px;color:var(--text2);margin-top:10px;" id="ai-status">ה-AI מייצר אתגר...</div>
+    <div class="ai-bar"><div class="ai-fill" id="ai-bar-fill"></div></div>
+    <div style="font-size:11px;color:var(--text3);" id="ai-substatus">מייצר לפי הנושא והפרופיל שלך</div>
+  </div>
+
+  <div id="preview-result" style="display:none;">
+    <div class="challenge-wrap">
+      <div class="challenge-lbl" id="preview-challenge-name" style="font-size:16px;font-weight:900;color:var(--accent);margin-bottom:8px;"></div>
+      <div class="challenge-lbl">⚡ האתגר</div>
+      <div class="challenge-txt" id="preview-challenge-txt">...</div>
+    </div>
+    <button class="btn btn-outline" onclick="regenerateChallenge()" style="margin-bottom:8px;">🔄 צור אתגר אחר</button>
+    <button class="btn btn-outline" onclick="shareToLibrary()" style="margin-bottom:8px;border-color:var(--teal);color:var(--teal);">📚 שתף למאגר הקהילתי</button>
+    <div class="field"><label>עריכה ידנית (אופציונלי)</label><textarea id="edit-challenge" rows="3"></textarea></div>
+    <button class="btn btn-primary" onclick="sendChallenge()">שלח לכולם ←</button>
+  </div>
+</div>
+
+<!-- ══════════════ TEACHER MONITOR ══════════════ -->
+<div class="screen" id="teacher-monitor">
+  <div class="topbar"><button class="back" onclick="go('teacher-waiting')">← חזרה</button><span class="badge b-live" style="margin:0;">חי 🔴</span></div>
+  <h2 style="margin-bottom:2px;">התלמידים בשטח</h2>
+  <div class="timer-wrap">
+    <div class="timer-num" id="t-timer">5:00</div>
+    <div class="timer-lbl">זמן נותר</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+    <div class="card" style="margin-bottom:0;">
+      <div class="sec-lbl">🏃 בשטח</div>
+      <div id="groups-field"></div>
+    </div>
+    <div class="card" style="margin-bottom:0;">
+      <div class="sec-lbl">✅ סיימו</div>
+      <div id="groups-done"></div>
+    </div>
+  </div>
+  <button class="btn btn-outline" onclick="endSession()">סיים שיעור והצבעה →</button>
+  <button class="btn btn-primary" onclick="announceWinner()" style="margin-top:8px;">🏆 הכרז זוכה</button>
+</div>
+
+<!-- ══════════════ TEACHER RESULTS ══════════════ -->
+<div class="screen" id="teacher-results">
+  <div class="topbar"><div class="logo-sm">פנדורה ⚡</div><button class="back" onclick="go('teacher-dashboard')">דשבורד</button></div>
+  <span class="badge b-teal">✅ סיכום שיעור</span>
+  <h2 style="margin-bottom:18px;">תוצאות</h2>
+  <div class="stats-grid">
+    <div class="stat"><div class="stat-n" style="color:var(--accent);" id="res-participants">—</div><div class="stat-l">השתתפו</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--pink);" id="res-groups">—</div><div class="stat-l">קבוצות</div></div>
+  </div>
+  <div class="card">
+    <div class="sec-lbl">הצבעת הכיתה</div>
+    <div id="results-scores"></div>
+  </div>
+  <button class="btn btn-primary" onclick="go('teacher-create-room')">+ שיעור חדש</button>
+</div>
+
+<!-- ══════════════ STUDENT JOIN ══════════════ -->
+<div class="screen" id="student-join">
+  <div class="topbar"><button class="back" onclick="go('home')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-pink">🎒 תלמיד</span>
+  <h2 style="margin-bottom:4px;">הצטרף לאתגר</h2>
+  <p style="margin-bottom:20px;">קבל את הקוד מהמורה שלך</p>
+  <div class="field"><label>קוד חדר</label><input type="text" class="code-input" id="s-code" placeholder="LION88" maxlength="6" style="text-transform:uppercase;" /></div>
+  <div class="field"><label>שמך הפרטי</label><input type="text" id="s-name" placeholder="שמך" /></div>
+  <div class="err" id="join-err"></div>
+  <button class="btn btn-pink" onclick="studentJoin()">כניסה ←</button>
+</div>
+
+<!-- ══════════════ STUDENT WAITING ══════════════ -->
+<div class="screen" id="student-waiting">
+  <div style="text-align:center;padding-top:20px;">
+    <span class="badge b-amber">⏳ ממתינים</span>
+    <h2 style="margin-bottom:6px;">ממתינים לאתגר</h2>
+    <p style="margin-bottom:20px;">המורה עומד לשלוח את האתגר לכולם</p>
+    <div class="card" style="text-align:right;margin:18px 0;">
+      <div class="sec-lbl">הקבוצה שלך</div>
+      <div style="font-size:22px;font-weight:900;color:var(--accent);margin-bottom:12px;" id="s-group-name">ממתין...</div>
+      <div id="s-group-members"></div>
+    </div>
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div style="font-size:12px;color:var(--text3);margin-top:8px;">האתגר מוכן בקרוב</div>
+  </div>
+</div>
+
+<!-- ══════════════ STUDENT CHALLENGE ══════════════ -->
+<div class="screen" id="student-challenge">
+  <div class="topbar"><button class="back" onclick="go('student-waiting')">← חזרה</button><span class="badge b-purple" style="margin:0;" id="s-team-badge">⚡ הקבוצה שלך</span></div>
+  <span class="badge b-purple">🎯 האתגר שלכם</span>
+  <h2 style="margin-bottom:4px;" id="s-challenge-name"></h2>
+  <div class="challenge-wrap">
+    <div class="challenge-lbl">⚡ אתגר</div>
+    <div class="challenge-txt" id="s-challenge-txt">...</div>
+  </div>
+  <div class="card">
+    <div class="sec-lbl">איך להצליח</div>
+    <ul class="steps">
+      <li class="step"><div class="step-n">1</div><div class="step-t">חלקו תפקידים — צלם, במאי, דוברים</div></li>
+      <li class="step"><div class="step-n">2</div><div class="step-t">צאו החוצה ביחד</div></li>
+      <li class="step"><div class="step-n">3</div><div class="step-t">בנו, צלמו, חזרו לפני הטיימר</div></li>
+      <li class="step"><div class="step-n">4</div><div class="step-t">העלו לפני שהזמן נגמר</div></li>
+    </ul>
+  </div>
+  <button class="btn btn-pink" onclick="startField()">התחל — יוצאים! ⚡</button>
+</div>
+
+<!-- ══════════════ STUDENT FIELD ══════════════ -->
+<div class="screen" id="student-field">
+  <div class="topbar"><button class="back" onclick="go('student-challenge')">← חזרה</button><span class="badge b-live" style="margin:0;">חי 🔴</span></div>
+  <div class="timer-wrap">
+    <div class="timer-num" id="s-timer">5:00</div>
+    <div class="timer-lbl">דקות נותרות</div>
+  </div>
+  <div class="card">
+    <div class="sec-lbl">הקבוצה שלך</div>
+    <div id="s-team-members"></div>
+  </div>
+  <div class="challenge-wrap" style="padding:14px;">
+    <div class="challenge-txt" style="font-size:14px;" id="s-field-challenge">...</div>
+  </div>
+  <button class="btn btn-pink" onclick="go('student-submit')">סיימנו — להגשה ←</button>
+</div>
+
+<!-- ══════════════ STUDENT SUBMIT ══════════════ -->
+<div class="screen" id="student-submit">
+  <div class="topbar"><div class="logo-sm">פנדורה ⚡</div><span class="badge b-live" style="margin:0;">חי 🔴</span></div>
+  <div class="timer-wrap" style="margin:12px 0;">
+    <div class="timer-num urgent" id="s-submit-timer">5:00</div>
+    <div class="timer-lbl">זמן נותר</div>
+  </div>
+  <div class="challenge-wrap" style="padding:14px;margin-bottom:14px;">
+    <div class="challenge-txt" style="font-size:14px;" id="s-submit-challenge">...</div>
+  </div>
+  <div class="card" style="text-align:center;padding:24px;">
+    <div style="font-size:40px;margin-bottom:10px;">🙋</div>
+    <h3 style="margin-bottom:6px;">סיימתם?</h3>
+    <p style="margin-bottom:0;">לחצו כשאתם מוכנים להציג בפני הכיתה</p>
+  </div>
+  <button class="btn btn-pink" onclick="submitProduct()" style="margin-top:14px;">סיימנו — מוכנים להציג ✓</button>
+</div>
+
+<!-- ══════════════ STUDENT FINISH ══════════════ -->
+<div class="screen" id="student-winner">
+  <div class="winner">
+    <span style="font-size:60px;">🎉</span>
+    <h1 style="margin:16px 0 10px;">כל הכבוד!</h1>
+    <p style="color:var(--text2);margin-bottom:26px;">הייתם מדהימים — חזרו לכיתה להצגה!</p>
+    <button class="btn btn-pink" onclick="go('home')">חזרה להתחלה ←</button>
+  </div>
+</div>
+
+</div><!-- end shell -->
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG & STATE
+// ══════════════════════════════════════════
+let db = null;
+let CLAUDE_KEY = '';
+let currentRoom = null;
+let currentUser = { type: null, name: '', uid: null };
+let timerInterval = null;
+let timerSecs = 300;
+let selectedMode = 1;
+
+const GROUP_NAMES = ['ברקים ⚡','נמרים 🐯','עקרבים 🦂','פנתרים 🐆','נשרים 🦅','זאבים 🐺','דרקונים 🐉','ברדלסים 🐆'];
+
+// ══════════════════════════════════════════
+// STUDENT LINK
+// ══════════════════════════════════════════
+function updateStudentLink(code) {
+  const link = window.location.origin + window.location.pathname + '?join=' + code;
+  const el = document.getElementById('student-link-display');
+  if (el) el.textContent = link;
+}
+
+function shareStudentLink() {
+  const code = currentRoom?.code;
+  if (!code) return;
+  const link = window.location.origin + window.location.pathname + '?join=' + code;
+  if (navigator.share) {
+    navigator.share({ title: 'פנדורה ⚡', text: 'הצטרפו לאתגר!', url: link });
+  } else {
+    navigator.clipboard.writeText(link);
+    showNotif('✅ הקישור הועתק!');
+  }
+}
+
+// Auto-detect student join link
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const joinCode = params.get('join');
+  if (joinCode) {
+    document.addEventListener('DOMContentLoaded', () => {
+      go('student-join');
+      const el = document.getElementById('s-code');
+      if (el) el.value = joinCode.toUpperCase();
+    });
+    setTimeout(() => {
+      go('student-join');
+      const el = document.getElementById('s-code');
+      if (el) el.value = joinCode.toUpperCase();
+    }, 100);
+  }
+})();
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showNotif(msg, duration = 2500) {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ══════════════════════════════════════════
+// FIREBASE INIT
+// ══════════════════════════════════════════
+function saveClaudeKey() {
+  const key = document.getElementById('cfg-claudeKey').value.trim();
+  if (!key) { showErr('cfg-err', 'אנא הכנס את המפתח'); return; }
+  CLAUDE_KEY = key;
+  localStorage.setItem('pandora_claude_key', key);
+  // שמור ב-Firebase אם המורה מחובר
+  if (db && currentUser?.uid) {
+    try { db.ref('teachers/' + currentUser.uid + '/claudeKey').set(key); } catch(e) {}
+  }
+  showNotif('✅ מוכן!');
+  go('home');
+}
+
+function initApp() { saveClaudeKey(); }
+
+// Firebase config - hardcoded
+(function() {
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp({
+        apiKey: "AIzaSyDec9V3wSoBQuTUmy3Sdl72WtRcTXQAQM8",
+        authDomain: "pandora-2f750.firebaseapp.com",
+        databaseURL: "https://pandora-2f750-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "pandora-2f750"
+      });
+    }
+    db = firebase.database();
+  } catch(e) { console.log('Firebase init error:', e); }
+  const saved = localStorage.getItem('pandora_claude_key');
+  if (saved) CLAUDE_KEY = saved;
+})();
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideErr(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('show');
+}
+function toggleChip(el) { el.classList.toggle('on'); }
+function genCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c = '';
+  for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
+  return c;
+}
+function fmt(s) {
+  const m = Math.floor(s / 60), sec = s % 60;
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+function getChips(container) {
+  return Array.from(container.querySelectorAll('.chip.on')).map(c => c.textContent).join(', ');
+}
+
+// ══════════════════════════════════════════
+// TEACHER AUTH
+// ══════════════════════════════════════════
+async function teacherLogin() {
+  hideErr('login-err');
+  const name = document.getElementById('t-email').value.trim();
+  const pass = document.getElementById('t-pass').value;
+  if (!name || !pass) { showErr('login-err', 'מלא שם וסיסמה'); return; }
+
+  const savedPass = localStorage.getItem('pandora_teacher_pass_' + name);
+  if (savedPass && savedPass !== pass) {
+    showErr('login-err', 'סיסמה שגויה');
+    return;
+  }
+
+  // שמור סיסמה בפעם הראשונה
+  localStorage.setItem('pandora_teacher_pass_' + name, pass);
+
+  currentUser = { type: 'teacher', uid: 'teacher_' + name, name, email: name };
+  document.getElementById('dash-greeting').textContent = 'שלום, ' + name + ' 👋';
+  document.getElementById('dash-sessions').textContent = localStorage.getItem('pandora_sessions_' + name) || 0;
+  document.getElementById('dash-students').textContent = localStorage.getItem('pandora_students_' + name) || 0;
+
+  // טען מפתח Claude — קודם מ-Firebase, אחר כך מ-localStorage
+  try {
+    const snap = await db.ref('teachers/' + currentUser.uid + '/claudeKey').get();
+    if (snap.exists()) {
+      CLAUDE_KEY = snap.val();
+      localStorage.setItem('pandora_claude_key', CLAUDE_KEY);
+    } else {
+      const savedKey = localStorage.getItem('pandora_claude_key');
+      if (savedKey) {
+        CLAUDE_KEY = savedKey;
+        // שמור ב-Firebase לפעם הבאה
+        try { await db.ref('teachers/' + currentUser.uid + '/claudeKey').set(savedKey); } catch(e) {}
+      }
+    }
+  } catch(e) {
+    const savedKey = localStorage.getItem('pandora_claude_key');
+    if (savedKey) CLAUDE_KEY = savedKey;
+  }
+
+  const statusEl = document.getElementById('claude-status');
+  if (statusEl) statusEl.innerHTML = CLAUDE_KEY ? '🤖 Claude: <span style="color:var(--teal)">מחובר ✅</span>' : '🤖 Claude: <span style="color:var(--red)">לא מוגדר — <span style="cursor:pointer;text-decoration:underline;" onclick="go(\'setup\')">הגדר כאן</span></span>';
+
+  go('teacher-dashboard');
+}
+
+async function teacherRegister() {
+  hideErr('reg-err');
+  const name = document.getElementById('t-name').value.trim();
+  const school = document.getElementById('t-school').value.trim();
+  const email = document.getElementById('t-reg-email').value.trim();
+  const pass = document.getElementById('t-reg-pass').value;
+  if (!name || !school || !email || !pass) { showErr('reg-err', 'מלא את כל השדות'); return; }
+  if (!db) { currentUser = { type: 'teacher', name, school, uid: 'demo' }; go('teacher-profile'); return; }
+  try {
+    const cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
+    await db.ref('teachers/' + cred.user.uid).set({ name, school, email, createdAt: Date.now() });
+    currentUser = { type: 'teacher', uid: cred.user.uid, name, school, email };
+    go('teacher-profile');
+  } catch(e) {
+    showErr('reg-err', 'שגיאת הרשמה: ' + e.message);
+  }
+}
+
+function simulateTeacherLogin(email) {
+  currentUser = { type: 'teacher', uid: 'demo', email, name: 'בן' };
+  loadTeacherDashboard();
+}
+
+async function loadTeacherDashboard() {
+  document.getElementById('dash-greeting').textContent = 'שלום, ' + (currentUser.name || 'מורה') + ' 👋';
+  if (db && currentUser.uid !== 'demo') {
+    const snap = await db.ref('teachers/' + currentUser.uid).get();
+    if (!snap.exists()) {
+      // אין פרופיל — צור אחד ריק ועבור לפרופיל
+      await db.ref('teachers/' + currentUser.uid).set({ name: '', school: '', email: currentUser.email || '', createdAt: Date.now() });
+      go('teacher-profile');
+      return;
+    }
+    const data = snap.val();
+    currentUser.name = data.name;
+    if (data.name) {
+      document.getElementById('dash-greeting').textContent = 'שלום, ' + data.name + ' 👋';
+    }
+    document.getElementById('dash-sessions').textContent = data.sessionCount || 0;
+    document.getElementById('dash-students').textContent = data.totalStudents || 0;
+  }
+  go('teacher-dashboard');
+}
+
+async function saveProfile() {
+  const subject = document.getElementById('p-subject').value.trim();
+  // subject is optional
+
+  const grades = Array.from(document.querySelectorAll('#teacher-profile .chip.on')).map(c => c.textContent).join(', ');
+  const values = Array.from(document.querySelectorAll('#teacher-profile .chip.on')).map(c => c.textContent).filter(t => !['גן','א׳-ב׳','ג׳-ד׳','ה׳-ו׳','ז׳-ח׳','ט׳-י׳','י״א-י״ב'].includes(t)).join(', ');
+
+  const name = currentUser?.name || '';
+  localStorage.setItem('pandora_subject_' + name, subject);
+  localStorage.setItem('pandora_grades_' + name, grades);
+  localStorage.setItem('pandora_values_' + name, values);
+
+  if (!currentUser.profile) currentUser.profile = {};
+  currentUser.profile.subject = subject;
+  currentUser.profile.grades = grades;
+  currentUser.profile.values = values;
+
+  if (db && currentUser.uid && currentUser.uid !== 'demo') {
+    try { await db.ref('teachers/' + currentUser.uid).update({ subject, grades, values }); } catch(e) {}
+  }
+
+  go('teacher-dashboard');
+  showNotif('✅ הפרופיל נשמר');
+}
+
+function teacherLogout() {
+  if (db) firebase.auth().signOut().catch(() => {});
+  currentUser = { type: null };
+  go('home');
+}
+
+// ══════════════════════════════════════════
+// MODE SELECTION
+// ══════════════════════════════════════════
+function selectMode(n) {
+  selectedMode = n;
+  document.querySelectorAll('.mode-card').forEach((c, i) => {
+    c.classList.toggle('selected', i + 1 === n);
+  });
+  ['ms-1', 'ms-2', 'ms-4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+  const active = document.getElementById('ms-' + n);
+  if (active) active.classList.add('show');
+}
+
+// ══════════════════════════════════════════
+// ROOM CREATION
+// ══════════════════════════════════════════
+async function createRoom() {
+  const topic = document.getElementById('room-topic').value.trim();
+  if (!topic) { showNotif('אנא הזן נושא שיעור'); return; }
+
+  const code = genCode();
+  const roomData = {
+    code,
+    topic,
+    mode: selectedMode,
+    teacherChallenge: document.getElementById('teacher-challenge')?.value?.trim() || '',
+    keywords: document.getElementById('room-keywords')?.value?.trim() || '',
+    drill: document.getElementById('room-drill')?.value?.trim() || '',
+    teacherUid: currentUser.uid,
+    status: 'waiting',
+    createdAt: Date.now(),
+    students: {}
+  };
+
+  currentRoom = { code, ...roomData };
+
+  if (db) {
+    try { await db.ref('rooms/' + code).set(roomData); } catch(e) {}
+    listenToRoom(code);
+  }
+
+  document.getElementById('room-code-display').textContent = code;
+  updateStudentLink(code);
+  go('teacher-waiting');
+  listenToStudents(code);
+}
+
+function listenToStudents(code) {
+  if (!db) return;
+  db.ref('rooms/' + code + '/students').on('value', snap => {
+    const students = snap.val() || {};
+    const names = Object.values(students).map(s => s.name);
+    document.getElementById('joined-count').textContent = names.length + ' תלמידים';
+    const avs = document.getElementById('joined-avatars');
+    avs.innerHTML = '';
+    names.slice(0, 12).forEach(n => {
+      const div = document.createElement('div');
+      div.className = 'w-av joined';
+      div.textContent = n[0];
+      avs.appendChild(div);
+    });
+  });
+}
+
+function listenToRoom(code) {
+  if (!db) return;
+  db.ref('rooms/' + code + '/status').on('value', snap => {
+    const status = snap.val();
+    if (status === 'active' && currentUser.type === 'teacher') {
+      startTeacherTimer();
+      go('teacher-monitor');
+      listenToGroupProgress(code);
+    }
+  });
+}
+
+function closeRoom() {
+  if (db && currentRoom) db.ref('rooms/' + currentRoom.code).update({ status: 'closed' });
+  go('teacher-dashboard');
+}
+
+// ══════════════════════════════════════════
+// CLAUDE AI CHALLENGE GENERATION
+// ══════════════════════════════════════════
+async function sendLibraryChallenge() {
+  if (!currentRoom?.generatedChallenge) {
+    showNotif('אין אתגר מהמאגר — צור אתגר חדש');
+    return;
+  }
+  go('teacher-preview');
+  document.getElementById('ai-loader').style.display = 'none';
+  document.getElementById('preview-result').style.display = 'block';
+  const nameEl = document.getElementById('preview-challenge-name');
+  if (nameEl) nameEl.textContent = currentRoom.challengeName ? '✨ ' + currentRoom.challengeName : '';
+  document.getElementById('preview-challenge-txt').textContent = currentRoom.generatedChallenge;
+  document.getElementById('edit-challenge').value = currentRoom.generatedChallenge;
+}
+
+async function generateAndPreview() {
+  go('teacher-preview');
+  document.getElementById('ai-loader').style.display = 'block';
+  document.getElementById('preview-result').style.display = 'none';
+  const fill = document.getElementById('ai-bar-fill');
+  fill.style.width = '0%';
+  setTimeout(() => { fill.style.width = '85%'; }, 50);
+
+  const challenge = await callClaude();
+
+  fill.style.width = '100%';
+  setTimeout(() => {
+    document.getElementById('ai-loader').style.display = 'none';
+    document.getElementById('preview-result').style.display = 'block';
+    const parsed = parseChallenge(challenge);
+    const nameEl = document.getElementById('preview-challenge-name');
+    if (nameEl) nameEl.textContent = parsed.challengeName ? '✨ ' + parsed.challengeName : '';
+    document.getElementById('preview-challenge-txt').textContent = parsed.challengeText;
+    document.getElementById('edit-challenge').value = parsed.challengeText;
+    currentRoom.generatedChallenge = parsed.challengeText;
+    currentRoom.challengeName = parsed.challengeName;
+  }, 400);
+}
+
+function parseChallenge(challenge) {
+  let challengeName = '';
+  let challengeText = challenge;
+  const nameMatch = challenge.match(/שם:\s*(.+)/);
+  const textMatch = challenge.match(/אתגר:\s*([\s\S]+)/);
+  if (nameMatch) challengeName = nameMatch[1].trim().replace(/\*/g, '').trim();
+  if (textMatch) challengeText = textMatch[1].trim().replace(/\*\*[^*]+\*\*/g, '').replace(/\*/g, '').trim();
+  // תיקוני כתיב אוטומטיים
+  challengeText = challengeText.replace(/באגלית/g, 'באנגלית').replace(/מנצח׳/g, 'מנצח');
+  // נקה כותרות מיותרות בתוך הטקסט
+  challengeText = challengeText.replace(/^אתגר\s+\S+\s*/m, '').trim();
+  return { challengeName, challengeText };
+}
+
+async function callClaude() {
+  const topic = currentRoom?.topic || '';
+  const mode = currentRoom?.mode || 2;
+  const teacherChallenge = currentRoom?.teacherChallenge || '';
+  const keywords = currentRoom?.keywords || '';
+  const drill = currentRoom?.drill || '';
+  const outputType = currentRoom?.outputType || '';
+
+  const teacherName = currentUser?.name || '';
+  const teacherProfile = currentUser?.profile || {};
+  const subject = teacherProfile.subject || localStorage.getItem('pandora_subject_' + teacherName) || '';
+  const grades = teacherProfile.grades || localStorage.getItem('pandora_grades_' + teacherName) || '';
+  const duration = currentRoom?.duration || '5 דק׳';
+  const profileContext = subject ? `מקצוע: ${subject}${grades ? ', כיתות: ' + grades : ''}.` : '';
+  const outputContext = outputType && outputType !== 'AI בוחר' ? `תוצר: ${outputType}.` : '';
+
+  // מצב 4 — ממוקד חומר: הנחיה שונה לגמרי
+  if (mode === 4) {
+    const drillPrompt = `צור אתגר פיזי קצר שמתרגל את החומר הבא: "${drill || topic}".
+${profileContext} זמן: ${duration}.
+הפורמט הפשוט ביותר: המורה שואל/צועק → תלמיד עונה בגוף או בקול → מי שמגיב נכון ראשון מנצח נקודה.
+הגיוון בא מהתגובה הפיזית — כל אתגר תגובה אחרת: קפיצה, ריצה, סיבוב, כריעה, צעקה, מחיאת כפיים. בחר תגובה מפתיעה שמתאימה לחומר.
+האתגר חייב:
+- לתרגל את המושג/מיומנות ישירות — לא סביבו.
+- להיות ברור לגמרי — תלמיד מבין מה לעשות בשנייה הראשונה.
+- אפס הכנה מראש — אין כרטיסים, פתקים, דפים או חפצים שצריך להביא.
+- 3 משפטים בלבד. ללא דוגמאות, ללא רשימות, ללא כוכביות.
+- אל תכניס את שם האתגר לתוך הטקסט — רק בשורת "שם:".
+- אם יש עונש לשגיאה — הגדר אותו בדיוק: כמה שניות יושבים, מה עושים, מתי חוזרים.
+- עברית תקינה ומדויקת. תיקוני כתיב: "באנגלית" לא "באגלית".
+פורמט מחייב:
+שם: [שם בלבד, ללא כוכביות]
+אתגר: [3 משפטים בלבד — ללא כוכביות, ללא כותרות, ללא שם בתוך הטקסט, ללא דוגמאות]`;
+    try {
+      const res = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system: drillPrompt, userPrompt: 'צור אתגר ממוקד חומר עכשיו.', claudeKey: CLAUDE_KEY })
+      });
+      const data = await res.json();
+      return data.content?.[0]?.text || '❌ שגיאה';
+    } catch(e) { return '❌ שגיאה: ' + e.message; }
+  }
+
+  // ══ קריאה 1: מהירה — רק חוקים בסיסיים ══
+  const fastPrompt = `צור אתגר פיזי קצר לתלמידים.
+${profileContext} ${outputContext} זמן: ${duration}.
+חוקים: פיזי, לחץ זמן, 3 משפטים בלבד, שם ייחודי.
+כל פעולה חייבת להיות ניתנת לביצוע מיידי — אם תלמיד לא יודע מה לעשות בשנייה הראשונה, האתגר נכשל.
+אם הנושא כולל פרק ספציפי, דמות ספציפית או מושג ספציפי — האתגר חייב להיות מדויק לתוכן הזה. אל תחליף פרק במ"א בפרק מ"ב. אל תחליף דמות אחת באחרת. דייק.
+לכיתות גן, א-ב, ג-ד — פעולה פיזית אחת ברורה בלבד, ללא מצבים מופשטים.
+נושא: ${topic}${keywords ? ', מילות מפתח: ' + keywords : ''}.
+אם יש תחרות — חייב להיות ברור מי מנצח ואיך. אין תחרות ללא בורר ברור.
+אם יש ניחוש — חייב להיות ברור מי מנחש, מה הוא מנחש, ואיך הוא יכול לדעת את התשובה.
+פורמט:
+שם: [שם]
+אתגר: [3 משפטים]
+עברית תקינה ומדויקת בלבד. בדוק כתיב.`;
+
+  let fastResult = '';
+  try {
+    const res1 = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system: fastPrompt, userPrompt: 'צור אתגר עכשיו.', claudeKey: CLAUDE_KEY })
+    });
+    const data1 = await res1.json();
+    fastResult = data1.content?.[0]?.text || '';
+  } catch(e) { fastResult = ''; }
+
+  if (!fastResult) return '❌ שגיאה בייצור האתגר';
+
+  // ══ קריאה 2: העשרה — הרפרנסים מגיעים כאן ══
+  const enrichPrompt = `אתה מעשיר ומקצר אתגר חינוכי פיזי.
+קיבלת אתגר גולמי — שפר אותו בעזרת ההשראות הבאות.
+
+השראות: בואל, גרוטובסקי, פריירה, הויזינגה, בונואל, סנקה, ניטשה, קאמי, סארטר, ויטגנשטיין, אפלטון, דאגלס אדמס, קפקא, בקט, מרקז, ג'ון קייג', מיילס דייוויס, פיקאסו, דושאן, אברמוביץ', דארווין, הייזנברג, שרדינגר, כהנמן, סון דזה, וואבי-סאבי, ניקיון, שוק פשפשים, גן ילדים, בית קברות, אש, גשר, כלב, חלל, ידיים, פוקר, מכרה, שעון, דואר.
+לפני שאתה יוצר — המציא לעצמך עולם השראה שלא קיים ברשימה.
+
+חוקים קשיחים — אין פשרות:
+- 3 משפטים בלבד. אם יש 4 — כתוב מחדש עד שיש 3.
+- אם יש תחרות — חייב להיות ברור מי מנצח ואיך. אין תחרות ללא בורר ברור.
+- כל פעולה באתגר חייבת להיות ניתנת לביצוע פיזי מיידי — אם תלמיד לא יודע מה לעשות בשנייה הראשונה, האתגר נכשל.
+- אין פעולות מופשטות כמו "החלט", "בחר", "שקול" — רק פעולות גוף ברורות: רוץ, עמוד, גע, שב, צעק, שתוק.
+- אין פעולות שדורשות משאבים שלא קיימים — אם האתגר אומר "מי שמחוץ לקבוצה" — חייבים להיות תלמידים מחוץ לקבוצה.
+- שמור על השם אם טוב, שנה אם לא.
+- פיזי, מפתיע, פשוט להבנה.
+- עברית תקינה ומדויקת. בדוק כתיב לפני שאתה מחזיר. אין שגיאות כתיב.
+
+פורמט — חובה:
+שם: [שם]
+אתגר: [משפט 1. משפט 2. משפט 3.]`;
+
+  try {
+    const res2 = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system: enrichPrompt, userPrompt: fastResult, claudeKey: CLAUDE_KEY })
+    });
+    const data2 = await res2.json();
+    const enriched = data2.content?.[0]?.text || '';
+    if (enriched) return enriched;
+  } catch(e) {}
+
+  return fastResult;
+}
+
+
+async function regenerateChallenge() {
+  document.getElementById('preview-result').style.display = 'none';
+  document.getElementById('ai-loader').style.display = 'block';
+  const fill = document.getElementById('ai-bar-fill');
+  fill.style.width = '0%';
+  setTimeout(() => { fill.style.width = '85%'; }, 50);
+  const challenge = await callClaude();
+  fill.style.width = '100%';
+  setTimeout(() => {
+    document.getElementById('ai-loader').style.display = 'none';
+    document.getElementById('preview-result').style.display = 'block';
+    const parsed = parseChallenge(challenge);
+    const nameEl = document.getElementById('preview-challenge-name');
+    if (nameEl) nameEl.textContent = parsed.challengeName ? '✨ ' + parsed.challengeName : '';
+    document.getElementById('preview-challenge-txt').textContent = parsed.challengeText;
+    document.getElementById('edit-challenge').value = parsed.challengeText;
+    currentRoom.generatedChallenge = parsed.challengeText;
+    currentRoom.challengeName = parsed.challengeName;
+  }, 400);
+}
+
+// ══════════════════════════════════════════
+// COMMUNITY LIBRARY
+// ══════════════════════════════════════════
+async function shareToLibrary() {
+  const challenge = document.getElementById('edit-challenge').value.trim() || currentRoom.generatedChallenge;
+  const name = currentRoom.challengeName || '';
+  const subject = currentUser?.profile?.subject || localStorage.getItem('pandora_subject_' + currentUser?.name) || '';
+  const grades = currentUser?.profile?.grades || localStorage.getItem('pandora_grades_' + currentUser?.name) || '';
+  const topic = currentRoom?.topic || '';
+  if (!challenge) { showNotif('אין אתגר לשתף'); return; }
+  if (!db) { showNotif('אין חיבור — לא ניתן לשתף'); return; }
+  try {
+    await db.ref('library').push({ name, challenge, subject, grades, topic, sharedBy: currentUser?.name || 'אנונימי', sharedAt: Date.now() });
+    showNotif('✅ האתגר נוסף למאגר הקהילתי!');
+  } catch(e) { showNotif('שגיאה בשמירה — נסה שוב'); }
+}
+
+async function openLibrary() { 
+  go('teacher-library'); 
+  document.getElementById('library-results').innerHTML = '<p style="text-align:center;color:var(--text3);padding:30px;">בחר מקצוע וגיל כדי לחפש אתגרים</p>';
+  libraryItems = [];
+}
+
+async function loadLibrary() {
+  const resultsEl = document.getElementById('library-results');
+  const subject = document.getElementById('lib-subject').value.trim();
+  const grade = document.getElementById('lib-grade').value;
+  
+  if (!subject && !grade) {
+    resultsEl.innerHTML = '<p style="text-align:center;color:var(--text3);padding:30px;">הגדר מקצוע או גיל כדי לחפש</p>';
+    return;
+  }
+
+  resultsEl.innerHTML = '<p style="text-align:center;color:var(--text3);padding:20px;">מחפש...</p>';
+
+  if (!db) { resultsEl.innerHTML = '<p style="text-align:center;color:var(--text3);">אין חיבור</p>'; return; }
+  try {
+    const snap = await db.ref('library').get();
+    const items = snap.val() || {};
+    libraryItems = Object.entries(items).map(([id, item]) => ({ id, ...item }));
+    filterLibrary();
+  } catch(e) { 
+    resultsEl.innerHTML = '<p style="text-align:center;color:var(--text3);">שגיאה בטעינה</p>'; 
+  }
+}
+
+function filterLibrary() {
+  const subject = document.getElementById('lib-subject').value.trim().toLowerCase();
+  const grade = document.getElementById('lib-grade').value;
+  const filtered = libraryItems.filter(item => {
+    const matchSubject = !subject || (item.subject || '').toLowerCase().includes(subject);
+    const matchGrade = !grade || (item.grades || '').includes(grade);
+    return matchSubject && matchGrade;
+  });
+  renderLibrary(filtered);
+}
+
+function renderLibrary(items) {
+  const resultsEl = document.getElementById('library-results');
+  if (!items.length) { resultsEl.innerHTML = '<p style="text-align:center;color:var(--text3);padding:30px;">לא נמצאו אתגרים</p>'; return; }
+  resultsEl.innerHTML = items.map(item => `
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--accent);">✨ ${item.name || 'אתגר'}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">${item.subject || ''}${item.grades ? ' · ' + item.grades : ''}${item.topic ? ' · ' + item.topic : ''}</div>
+        </div>
+        <button onclick="useFromLibrary('${item.id}')" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">השתמש ←</button>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6;">${item.challenge}</div>
+    </div>`).join('');
+}
+
+async function useFromLibrary(id) {
+  const item = libraryItems.find(i => i.id === id);
+  if (!item) return;
+
+  // צור חדר קודם
+  const code = genCode();
+  const roomData = {
+    code,
+    topic: item.topic || item.subject || '',
+    mode: 1,
+    teacherChallenge: item.challenge,
+    keywords: '',
+    drill: '',
+    teacherUid: currentUser.uid,
+    status: 'waiting',
+    createdAt: Date.now(),
+    students: {}
+  };
+
+  currentRoom = { code, ...roomData };
+
+  if (db) {
+    try { await db.ref('rooms/' + code).set(roomData); } catch(e) {}
+    listenToRoom(code);
+  }
+
+  // הצג חדר המתנה עם קישור
+  document.getElementById('room-code-display').textContent = code;
+  updateStudentLink(code);
+  go('teacher-waiting');
+  listenToStudents(code);
+
+  // שמור את האתגר לשליחה
+  currentRoom.generatedChallenge = item.challenge;
+  currentRoom.challengeName = item.name;
+}
+
+async function sendChallenge() {
+  const finalChallenge = document.getElementById('edit-challenge').value.trim() || currentRoom.generatedChallenge;
+  currentRoom.finalChallenge = finalChallenge;
+
+  if (db && currentRoom) {
+    try { await db.ref('rooms/' + currentRoom.code).update({ challenge: finalChallenge, status: 'active', startedAt: Date.now() }); } catch(e) {}
+  }
+
+  startTeacherTimer();
+  listenToGroupProgress(currentRoom.code);
+  go('teacher-monitor');
+}
+
+// ══════════════════════════════════════════
+// TEACHER MONITOR
+// ══════════════════════════════════════════
+function listenToGroupProgress(code) {
+  if (!db) {
+    renderDemoGroups();
+    return;
+  }
+  db.ref('rooms/' + code + '/students').on('value', snap => {
+    const students = snap.val() || {};
+    const done = Object.values(students).filter(s => s.submitted).map(s => s.name);
+    const field = Object.values(students).filter(s => !s.submitted).map(s => s.name);
+
+    const fieldEl = document.getElementById('groups-field');
+    const doneEl = document.getElementById('groups-done');
+
+    if (fieldEl) fieldEl.innerHTML = field.length
+      ? field.map(n => `<div style="font-size:13px;font-weight:600;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">${n}</div>`).join('')
+      : '<div style="font-size:12px;color:var(--text3);">—</div>';
+
+    if (doneEl) doneEl.innerHTML = done.length
+      ? done.map(n => `<div style="font-size:13px;font-weight:600;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);color:var(--teal);">${n} ✓</div>`).join('')
+      : '<div style="font-size:12px;color:var(--text3);">—</div>';
+  });
+}
+
+function renderDemoGroups() {
+  const fieldEl = document.getElementById('groups-field');
+  const doneEl = document.getElementById('groups-done');
+  if (fieldEl) fieldEl.innerHTML = ['נמרים 🐯','נשרים 🦅','פנתרים 🐆'].map(g =>
+    `<div style="font-size:13px;font-weight:600;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">${g}</div>`).join('');
+  if (doneEl) doneEl.innerHTML = `<div style="font-size:13px;font-weight:600;padding:4px 0;color:var(--teal);">ברקים ⚡ ✓</div>`;
+}
+
+function startTeacherTimer() {
+  clearInterval(timerInterval);
+  const duration = parseDuration(currentRoom?.duration || '5 דק׳');
+  timerSecs = duration;
+  timerInterval = setInterval(() => {
+    timerSecs--;
+    if (timerSecs < 0) { clearInterval(timerInterval); endSession(); return; }
+    const el = document.getElementById('t-timer');
+    if (el) el.textContent = fmt(timerSecs);
+  }, 1000);
+}
+
+function parseDuration(str) {
+  const match = str.match(/(\d+)/);
+  return match ? parseInt(match[1]) * 60 : 300;
+}
+
+function endSession() {
+  clearInterval(timerInterval);
+  if (db && currentRoom) db.ref('rooms/' + currentRoom.code).update({ status: 'voting' });
+  document.getElementById('res-participants').textContent = '32';
+  document.getElementById('res-groups').textContent = '6';
+  renderResults();
+  go('teacher-results');
+}
+
+function renderResults() {
+  const scores = [
+    { name: 'פנתרים 🐆', pct: 72, color: 'var(--accent)' },
+    { name: 'ברקים ⚡', pct: 55, color: 'var(--pink)' },
+    { name: 'נשרים 🦅', pct: 42, color: 'var(--teal)' },
+    { name: 'נמרים 🐯', pct: 28, color: 'var(--amber)' },
+  ];
+  document.getElementById('results-scores').innerHTML = scores.map(s =>
+    `<div class="score-row">
+      <span class="score-lbl">${s.name}</span>
+      <div class="score-track"><div class="score-fill" style="width:${s.pct}%;background:${s.color};"></div></div>
+      <span class="score-pct" style="color:${s.color};">${s.pct}%</span>
+    </div>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════
+// STUDENT FLOW
+// ══════════════════════════════════════════
+async function studentJoin() {
+  hideErr('join-err');
+  const code = document.getElementById('s-code').value.trim().toUpperCase();
+  const name = document.getElementById('s-name').value.trim();
+  if (!code || !name) { showErr('join-err', 'הזן קוד ושם'); return; }
+
+  currentUser = { type: 'student', name, code };
+
+  if (db) {
+    try {
+      const snap = await db.ref('rooms/' + code).get();
+      if (!snap.exists()) { showErr('join-err', 'קוד לא נמצא'); return; }
+      const room = snap.val();
+      if (room.status === 'closed') { showErr('join-err', 'החדר סגור'); return; }
+      const sid = db.ref('rooms/' + code + '/students').push().key;
+      currentUser.sid = sid;
+      try { await db.ref('rooms/' + code + '/students/' + sid).set({ name, joinedAt: Date.now(), q1: '', q2: '', q3: '' }); } catch(e) {}
+      currentRoom = { code, ...room };
+    } catch(e) { showErr('join-err', 'שגיאת חיבור — נסה שוב'); return; }
+  }
+
+  await assignToGroup();
+  go('student-waiting');
+  listenForChallenge();
+}
+
+async function submitQuestions() {
+  const q1 = document.getElementById('sq1').value.trim();
+  const q2 = document.getElementById('sq2').value.trim();
+  const q3 = document.getElementById('sq3').value.trim();
+  if (!q1 || !q2 || !q3) { showNotif('אנא ענה על כל השאלות'); return; }
+
+  currentUser.q1 = q1; currentUser.q2 = q2; currentUser.q3 = q3;
+
+  if (db && currentUser.sid) {
+    try { await db.ref('rooms/' + currentRoom.code + '/students/' + currentUser.sid).update({ q1, q2, q3 }); } catch(e) {}
+  }
+
+  // Assign to group
+  await assignToGroup();
+  go('student-waiting');
+  listenForChallenge();
+}
+
+async function assignToGroup() {
+  const groupIdx = Math.floor(Math.random() * GROUP_NAMES.length);
+  currentUser.groupName = GROUP_NAMES[groupIdx];
+  document.getElementById('s-group-name').textContent = currentUser.groupName;
+  document.getElementById('s-team-badge').textContent = currentUser.groupName;
+
+  // שמור את הקבוצה של התלמיד ב-Firebase
+  if (db && currentUser.sid) {
+    try { await db.ref('rooms/' + currentRoom.code + '/students/' + currentUser.sid).update({ group: currentUser.groupName }); } catch(e) {}
+  }
+
+  // קרא תלמידים אמיתיים מ-Firebase
+  let allMembers = [
+    { name: currentUser.name + ' (אתה)', q1: currentUser.q1 || '', q2: currentUser.q2 || '', q3: currentUser.q3 || '', isMe: true }
+  ];
+
+  if (db) {
+    try {
+      const snap = await db.ref('rooms/' + currentRoom.code + '/students').get();
+      const students = snap.val() || {};
+      const others = Object.entries(students)
+        .filter(([sid, s]) => sid !== currentUser.sid && s.name)
+        .map(([, s]) => ({ name: s.name, q1: s.q1 || '', q2: s.q2 || '', q3: s.q3 || '', isMe: false }));
+      allMembers = [...allMembers, ...others];
+    } catch(e) {}
+  }
+
+  const membersEl = document.getElementById('s-group-members');
+  membersEl.innerHTML = allMembers.map(m => `
+    <div style="background:${m.isMe ? 'rgba(108,99,255,.15)' : 'var(--surface2)'};border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;${m.isMe ? 'border:1px solid rgba(108,99,255,.3);' : ''}">
+      <div style="font-size:15px;font-weight:700;">${m.name}</div>
+    </div>`).join('');
+}
+
+function listenForChallenge() {
+  if (!db) {
+    setTimeout(() => {
+      const challenge = currentRoom?.finalChallenge || 'צאו לחצר ומצאו שלושה חפצים שמסמלים דברים שונים עבורכם. בנו מהם "פסל קהילה" ותעדו בוידאו 30 שניות.';
+      receiveChallenge(challenge);
+    }, 3000);
+    return;
+  }
+  db.ref('rooms/' + currentRoom.code).on('value', snap => {
+    const room = snap.val();
+    if (!room) return;
+    if (room.challenge && room.status === 'active') {
+      currentRoom.startedAt = room.startedAt;
+      currentRoom.duration = room.duration;
+      receiveChallenge(room.challenge);
+    }
+  });
+}
+
+function receiveChallenge(challenge) {
+  const parsed = parseChallenge ? parseChallenge(challenge) : { challengeName: '', challengeText: challenge };
+  const nameEl = document.getElementById('s-challenge-name');
+  if (nameEl) nameEl.textContent = parsed.challengeName || '';
+  document.getElementById('s-challenge-txt').textContent = parsed.challengeText || challenge;
+  document.getElementById('s-field-challenge').textContent = parsed.challengeText || challenge;
+  currentRoom.finalChallenge = parsed.challengeText || challenge;
+  go('student-challenge');
+}
+
+function startField() {
+  go('student-field');
+  document.getElementById('s-team-members').innerHTML = `
+    <div class="av-row"><div class="av">${currentUser.name[0]}</div><div class="av-name">${currentUser.name}</div><div class="av-tag">צלם</div></div>
+    <div class="av-row"><div class="av" style="background:rgba(255,95,160,.2);color:var(--pink);">מ</div><div class="av-name">חבר קבוצה</div><div class="av-tag">במאי</div></div>
+    <div class="av-row"><div class="av" style="background:rgba(0,212,170,.2);color:var(--teal);">א</div><div class="av-name">חבר קבוצה</div><div class="av-tag">דובר</div></div>`;
+
+  clearInterval(timerInterval);
+  const duration = parseDuration(currentRoom?.duration || '5 דק׳');
+  const startedAt = currentRoom?.startedAt || Date.now();
+  const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+  timerSecs = Math.max(0, duration - elapsed);
+
+  timerInterval = setInterval(() => {
+    timerSecs--;
+    if (timerSecs < 0) { clearInterval(timerInterval); go('student-submit'); return; }
+    const str = fmt(timerSecs);
+    const t1 = document.getElementById('s-timer');
+    const t2 = document.getElementById('s-submit-timer');
+    if (t1) { t1.textContent = str; t1.classList.toggle('urgent', timerSecs < 60); }
+    if (t2) { t2.textContent = str; t2.classList.toggle('urgent', timerSecs < 60); }
+  }, 1000);
+}
+
+async function submitProduct() {
+  if (db && currentUser.sid) {
+    try { await db.ref('rooms/' + currentRoom.code + '/students/' + currentUser.sid).update({ submitted: true }); } catch(e) {}
+  }
+  go('student-winner');
+}
+
+function renderVoteCards() {
+  // הבא קבוצות אמיתיות מ-Firebase
+  if (db && currentRoom?.code) {
+    db.ref('rooms/' + currentRoom.code + '/students').get().then(snap => {
+      const students = snap.val() || {};
+      const groups = [...new Set(Object.values(students).map(s => s.group).filter(Boolean))];
+      const otherGroups = groups.filter(g => g !== currentUser.groupName);
+      
+      if (otherGroups.length === 0) {
+        // אם אין קבוצות אחרות — הצג הודעה
+        document.getElementById('vote-cards').innerHTML = '<p style="color:var(--text2);text-align:center;">ממתינים לקבוצות אחרות...</p>';
+        return;
+      }
+
+      document.getElementById('vote-cards').innerHTML = otherGroups.map(g => `
+        <div class="card" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:16px;font-weight:700;">${g}</span>
+          <button class="btn btn-primary btn-sm" onclick="castVote('${g}')">הצבע ✓</button>
+        </div>`).join('');
+    });
+  }
+}
+
+async function castVote(groupName) {
+  if (db) {
+    const key = groupName.replace(/[^a-zA-Z\u0590-\u05ff0-9]/g, '_');
+    try { await db.ref('rooms/' + currentRoom.code + '/votes/' + key).transaction(v => (v || 0) + 1); } catch(e) {}
+  }
+
+  // הצג מסך המתנה לזוכה
+  document.getElementById('vote-cards').innerHTML = `
+    <div style="text-align:center;padding:30px 0;">
+      <div style="font-size:40px;margin-bottom:12px;">🗳️</div>
+      <p style="color:var(--text2);">הצבעת! ממתינים לשאר הכיתה...</p>
+    </div>`;
+
+  // הקשב לזוכה מ-Firebase
+  if (db) {
+    db.ref('rooms/' + currentRoom.code + '/winner').on('value', snap => {
+      if (snap.val()) {
+        document.getElementById('winner-name').textContent = snap.val();
+        go('student-winner');
+      }
+    });
+  }
+}
+
+async function announceWinner() {
+  // מצא זוכה לפי הצבעות
+  if (!db) return;
+  const votesSnap = await db.ref('rooms/' + currentRoom.code + '/votes').get();
+  const votes = votesSnap.val() || {};
+  let winner = '';
+  let maxVotes = 0;
+  Object.entries(votes).forEach(([g, v]) => {
+    if (v > maxVotes) { maxVotes = v; winner = g.replace(/_/g, ' '); }
+  });
+  if (winner) {
+    try { await db.ref('rooms/' + currentRoom.code + '/winner').set(winner); } catch(e) {}
+    document.getElementById('winner-name').textContent = winner;
+    go('student-winner');
+  }
+}
+
+</script>
+</body>
+</html>
