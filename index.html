@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -1023,13 +1024,63 @@ textarea{resize:none;height:80px;line-height:1.6;}
 // CONFIG & STATE
 // ══════════════════════════════════════════
 let db = null;
-let CLAUDE_KEY = '';
+// API key managed server-side via ANTHROPIC_API_KEY env var
 let currentRoom = null;
 let currentUser = { type: null, name: '', uid: null };
 let timerInterval = null;
 let timerSecs = 300;
 let selectedMode = 1;
 let libraryItems = [];
+
+// ══════════════════════════════════════════
+// PROMPT CONSTANTS — עדכן כאן בלבד, מתפשט לכל הפרומפטים
+// ══════════════════════════════════════════
+const PC = {
+  // כלל שם האתגר — 4 מופעים ב-buildGradedPrompt
+  CHALLENGE_NAME_RULE: `כלל לשם האתגר: השם חייב להיות מפתיע — לא תיאורי. שם שיוצר סקרנות בלי לחשוף את האתגר. לא "המטוטלת הנחתכת" — אלא שם שגורם לתלמיד לחשוב "מה זה בכלל?". דוגמאות טובות: "ביצת הגג", "הצעד שלא מגיע", "הכוס הרעילה". דוגמאות גרועות: "המטוטלת המסתובבת", "הכוס המתחממת".`,
+
+  // שאלת עולם אחר — 3 מופעים ב-buildGradedPrompt
+  SOLUTION_WORLD_QUESTION: `שאלה לפני שאתה כותב: האם הפתרון חי בעולם אחר לגמרי מהבעיה? (ביצת הגג: הבעיה = "כיצד להגן?" הפתרון = "אנרגיה לא גדלה מעצמה".)`,
+
+  // שלושה כללים — 4 מופעים ב-buildGradedPrompt
+  THREE_RULES: `שלושה כללים לכל הדגמים:
+אל תכתוב את הפתרון בתוך ההוראה — האתגר מציג את הבעיה, לא את הדרך לפתור אותה.
+המורה לא שחקן בתוך האתגר — לא צועק, לא שופט, לא מכריז.
+שמות דמויות חייבים להתאים בדיוק לטקסט שנמסר — אל תמציא שמות ואל תבלבל בין דמויות.`,
+
+  // שש מגבלות — 2 מופעים ב-buildGradedPrompt
+  SIX_LIMITS: `שש מגבלות לכתיבה:
+אסור: שם המשפט, הנוסחה, השיטה.
+אסור: מספרים מוכנים שפותרים את הבעיה.
+אסור: כלים ספציפיים.
+אסור: הסבר מאיפה מתחילים.
+אסור: רמז לפתרון.
+מותר: הקושי בלבד. מגבלה פיזית רק אם בלעדיה הבעיה טריוויאלית.`,
+
+  // מבנה קסם — 2 מופעים ב-buildGradedPrompt
+  MAGIC_STRUCTURE: `מבנה שיוצר קסם: [מצב מוצב] ← [אילוץ שנראה בלתי אפשרי] ← [מטרה ברורה] ← [בדיקה אובייקטיבית ללא מורה].
+דוגמה: נורה דולקת — כבה אותה בלי לגעת — 3 שניות — דולקת או לא.`,
+
+  // סיומת בעיה פתוחה — 8 מופעים ב-_runStage4 (4 multiline + 4 escaped)
+  OPEN_PROBLEM_SUFFIX: `לא "מה ייכשל בלי ידע" — אלא "מה הבעיה הפתוחה שמי שיודע פותר באופן לא צפוי?"
+הבעיה חייבת להיות: ברורה לכולם, פתיחה לגישות שונות, כזו שרוב הגישות ייכשלו — ורק גישה אחת שנובעת מהידע תצליח.
+
+דוגמה — ביצת הגג: הבעיה = הורד ביצה מגובה מטר בלי שתישבר. פתוחה, אפשר לנסות הרבה גישות. הידע פותח: בניית מנגנון בלימה.
+דוגמה — מרחק היחידה: הבעיה = מקם 20 נקודות על דף כך שמספר הזוגות במרחק 1 יהיה מקסימלי. רוב ייפזרו אקראית. הידע פותח: סריג משולשים.
+
+ענה בפורמט: [הבעיה הפתוחה] ← [הגישה שהידע פותח] ← [למה הנאיב לא יגיע אליה].`,
+
+  // פעולה מכוונת — 3 מופעים ב-_runStage4 (escaped)
+  GUIDED_ACTION_FRAME: `מה כולם ירצו לעשות באופן טבעי — ורק הידע משנה את האופן שבו עושים זאת?
+לא "מה נכשל" — אלא "מה הפעולה הטבעית שהידע מכוון אותה אחרת."
+הפעולה חייבת להיות אוניברסלית — כולם היו מנסים אותה. התוצאה הפיזית חייבת להיות שונה בין מי שיודע למי שלא.
+
+דוגמה — ביצת הגג: כולם רוצים לזרוק את הביצה. הידע לא מונע את הזריקה — הוא מכוון לאן. תוצאה שונה לגמרי.
+דוגמה — ייבום + זרימת מים: כולם ירצו לשפוך את המים לכוס הראשונה שרואים. הידע אומר: יש סדר. יש מי שמגיע לפני מי. שפוך ישירות — המים לא יגיעו לתמר.
+
+ענה בפורמט: [מה כולם רוצים לעשות] ← [איך הידע מכוון את הפעולה אחרת] ← [התוצאה הפיזית השונה].`,
+};
+
 
 const GROUP_NAMES = ['סגולים','אדומים','כתומים','טורקיז','תכלת','ירוקים','ורודים','צהובים'];
 const GROUP_COLORS = ['#6C63FF','#FF6B6B','#FFB347','#4ECDC4','#45B7D1','#96CEB4','#DDA0DD','#F7B731'];
@@ -1093,18 +1144,7 @@ function showNotif(msg, duration = 2500) {
 // ══════════════════════════════════════════
 // FIREBASE INIT
 // ══════════════════════════════════════════
-function saveClaudeKey() {
-  const key = document.getElementById('cfg-claudeKey').value.trim();
-  if (!key) { showErr('cfg-err', 'אנא הכנס את המפתח'); return; }
-  CLAUDE_KEY = key;
-  localStorage.setItem('pandora_claude_key', key);
-  // שמור ב-Firebase אם המורה מחובר
-  if (db && currentUser?.uid) {
-    try { db.ref('teachers/' + currentUser.uid + '/claudeKey').set(key); } catch(e) {}
-  }
-  showNotif('✅ מוכן!');
-  go('home');
-}
+function saveClaudeKey() { go('home'); } // key managed server-side
 
 
 // Firebase config - hardcoded
@@ -1120,8 +1160,7 @@ function saveClaudeKey() {
     }
     db = firebase.database();
   } catch(e) { console.log('Firebase init error:', e); }
-  const saved = localStorage.getItem('pandora_claude_key');
-  if (saved) CLAUDE_KEY = saved;
+
 })();
 
 // ══════════════════════════════════════════
@@ -1179,23 +1218,10 @@ async function teacherLogin() {
     document.getElementById('dash-sessions').textContent = localStorage.getItem('pandora_sessions_' + uid) || 0;
     document.getElementById('dash-students').textContent = localStorage.getItem('pandora_students_' + uid) || 0;
 
-    // טען מפתח Claude
-    try {
-      const keySnap = await db.ref('teachers/' + uid + '/claudeKey').get();
-      if (keySnap.exists()) {
-        CLAUDE_KEY = keySnap.val();
-        localStorage.setItem('pandora_claude_key', CLAUDE_KEY);
-      } else {
-        const savedKey = localStorage.getItem('pandora_claude_key');
-        if (savedKey) { CLAUDE_KEY = savedKey; try { await db.ref('teachers/' + uid + '/claudeKey').set(savedKey); } catch(e) {} }
-      }
-    } catch(e) {
-      const savedKey = localStorage.getItem('pandora_claude_key');
-      if (savedKey) CLAUDE_KEY = savedKey;
-    }
+    // API key managed server-side
 
     const statusEl = document.getElementById('claude-status');
-    if (statusEl) statusEl.innerHTML = CLAUDE_KEY ? '🤖 Claude: <span style="color:var(--teal)">מחובר ✅</span>' : '🤖 Claude: <span style="color:var(--red)">לא מוגדר — <span style="cursor:pointer;text-decoration:underline;" onclick="go(\'setup\')">הגדר כאן</span></span>';
+    if (statusEl) statusEl.innerHTML = '🤖 Claude: <span style="color:var(--teal)">מחובר ✅</span>';
 
     go('teacher-dashboard');
   } catch(e) {
@@ -1622,12 +1648,9 @@ ${historyCtx}
 
 
 
-שלושה כללים לכל הדגמים:
-אל תכתוב את הפתרון בתוך ההוראה — האתגר מציג את הבעיה, לא את הדרך לפתור אותה.
-המורה לא שחקן בתוך האתגר — לא צועק, לא שופט, לא מכריז.
-שמות דמויות חייבים להתאים בדיוק לטקסט שנמסר — אל תמציא שמות ואל תבלבל בין דמויות.
+${PC.THREE_RULES}
 
-כלל לשם האתגר: השם חייב להיות מפתיע — לא תיאורי. שם שיוצר סקרנות בלי לחשוף את האתגר. לא "המטוטלת הנחתכת" — אלא שם שגורם לתלמיד לחשוב "מה זה בכלל?". דוגמאות טובות: "ביצת הגג", "הצעד שלא מגיע", "הכוס הרעילה". דוגמאות גרועות: "המטוטלת המסתובבת", "הכוס המתחממת".
+${PC.CHALLENGE_NAME_RULE}
 
 כלל נוסף לשם שיפוטי: השם חייב להסתיר מי הנאשם ומי השופט. הוא מזמין כניסה לדיון בלי לחשוף מה בדיוק ייחקר. "בית הדין של תמר" ✓ — לא ברור מיד מי שופט את מי. "משפט יהודה" ✗ — מסגיר את הנאשם.
 שם: [שם]
@@ -1657,28 +1680,18 @@ ${historyCtx}
 
 
 
-שלושה כללים לכל הדגמים:
-אל תכתוב את הפתרון בתוך ההוראה — האתגר מציג את הבעיה, לא את הדרך לפתור אותה.
-המורה לא שחקן בתוך האתגר — לא צועק, לא שופט, לא מכריז.
-שמות דמויות חייבים להתאים בדיוק לטקסט שנמסר — אל תמציא שמות ואל תבלבל בין דמויות.
+${PC.THREE_RULES}
 
-מבנה שיוצר קסם: [מצב מוצב] ← [אילוץ שנראה בלתי אפשרי] ← [מטרה ברורה] ← [בדיקה אובייקטיבית ללא מורה].
-דוגמה: נורה דולקת — כבה אותה בלי לגעת — 3 שניות — דולקת או לא.
+${PC.MAGIC_STRUCTURE}
 
-שש מגבלות לכתיבה:
-אסור: שם המשפט, הנוסחה, השיטה.
-אסור: מספרים מוכנים שפותרים את הבעיה.
-אסור: כלים ספציפיים.
-אסור: הסבר מאיפה מתחילים.
-אסור: רמז לפתרון.
-מותר: הקושי בלבד. מגבלה פיזית רק אם בלעדיה הבעיה טריוויאלית.
+${PC.SIX_LIMITS}
 
-כלל לשם האתגר: השם חייב להיות מפתיע — לא תיאורי. שם שיוצר סקרנות בלי לחשוף את האתגר. לא "המטוטלת הנחתכת" — אלא שם שגורם לתלמיד לחשוב "מה זה בכלל?". דוגמאות טובות: "ביצת הגג", "הצעד שלא מגיע", "הכוס הרעילה". דוגמאות גרועות: "המטוטלת המסתובבת", "הכוס המתחממת".
+${PC.CHALLENGE_NAME_RULE}
 
 אסור לכתוב "מי שיודע" או "מי שלא יודע" בתוך האתגר — זה שובר את הקסם. האתגר מציג מצב ומשימה בלבד. הידע שקובע את ההצלחה נשאר בלתי נראה — כמו קסם שלא מגלה את הטריק.
 
 שאלה לפני שאתה כותב: האם האתגר נשמע בלתי אפשרי ברגע הראשון? אם לא — שנה את הניסוח עד שיישמע כך.
-שאלה לפני שאתה כותב: האם הפתרון חי בעולם אחר לגמרי מהבעיה? (ביצת הגג: הבעיה = "כיצד להגן?" הפתרון = "אנרגיה לא גדלה מעצמה".)
+${PC.SOLUTION_WORLD_QUESTION}
 שאלה לפני שאתה כותב: מה ירגיש הגוף ברגע שההנחה מתנפצת — פחד, הפתעה, בלבול? האם הגוף ילמד משהו שהראש לא יכול לספר לו?
 
 שאלה לפני שאתה כותב: מה הרגע שבו כולם בכיתה יראו שנכשלו — ולא ניתן לבטל? לא "לא הצלחנו" — משהו פיזי שקרה ואי אפשר להחזיר. הרגע הזה חייב להיות גלוי, מוחשי, ובלתי הפיך. בנה את האתגר סביבו.
@@ -1762,17 +1775,14 @@ ${historyCtx}
 
 
 
-שלושה כללים לכל הדגמים:
-אל תכתוב את הפתרון בתוך ההוראה — האתגר מציג את הבעיה, לא את הדרך לפתור אותה.
-המורה לא שחקן בתוך האתגר — לא צועק, לא שופט, לא מכריז.
-שמות דמויות חייבים להתאים בדיוק לטקסט שנמסר — אל תמציא שמות ואל תבלבל בין דמויות.
+${PC.THREE_RULES}
 
-כלל לשם האתגר: השם חייב להיות מפתיע — לא תיאורי. שם שיוצר סקרנות בלי לחשוף את האתגר. לא "המטוטלת הנחתכת" — אלא שם שגורם לתלמיד לחשוב "מה זה בכלל?". דוגמאות טובות: "ביצת הגג", "הצעד שלא מגיע", "הכוס הרעילה". דוגמאות גרועות: "המטוטלת המסתובבת", "הכוס המתחממת".
+${PC.CHALLENGE_NAME_RULE}
 
 אסור לכתוב "מי שיודע" או "מי שלא יודע" בתוך האתגר — זה שובר את הקסם. האתגר מציג מצב ומשימה בלבד. הידע שקובע את ההצלחה נשאר בלתי נראה — כמו קסם שלא מגלה את הטריק.
 
 שאלה לפני שאתה כותב: האם האתגר נשמע בלתי אפשרי ברגע הראשון? אם לא — שנה את הניסוח עד שיישמע כך.
-שאלה לפני שאתה כותב: האם הפתרון חי בעולם אחר לגמרי מהבעיה? (ביצת הגג: הבעיה = "כיצד להגן?" הפתרון = "אנרגיה לא גדלה מעצמה".)
+${PC.SOLUTION_WORLD_QUESTION}
 שאלה לפני שאתה כותב: מה ירגיש הגוף ברגע שההנחה מתנפצת — פחד, הפתעה, בלבול? האם הגוף ילמד משהו שהראש לא יכול לספר לו?
 
 שאלה לפני שאתה כותב: מה הרגע שבו כולם בכיתה יראו שנכשלו — ולא ניתן לבטל? לא "לא הצלחנו" — משהו פיזי שקרה ואי אפשר להחזיר. הרגע הזה חייב להיות גלוי, מוחשי, ובלתי הפיך. בנה את האתגר סביבו.
@@ -1960,28 +1970,18 @@ ${fewShotCtx}
 
 
 
-שלושה כללים לכל הדגמים:
-אל תכתוב את הפתרון בתוך ההוראה — האתגר מציג את הבעיה, לא את הדרך לפתור אותה.
-המורה לא שחקן בתוך האתגר — לא צועק, לא שופט, לא מכריז.
-שמות דמויות חייבים להתאים בדיוק לטקסט שנמסר — אל תמציא שמות ואל תבלבל בין דמויות.
+${PC.THREE_RULES}
 
-מבנה שיוצר קסם: [מצב מוצב] ← [אילוץ שנראה בלתי אפשרי] ← [מטרה ברורה] ← [בדיקה אובייקטיבית ללא מורה].
-דוגמה: נורה דולקת — כבה אותה בלי לגעת — 3 שניות — דולקת או לא.
+${PC.MAGIC_STRUCTURE}
 
-שש מגבלות לכתיבה:
-אסור: שם המשפט, הנוסחה, השיטה.
-אסור: מספרים מוכנים שפותרים את הבעיה.
-אסור: כלים ספציפיים.
-אסור: הסבר מאיפה מתחילים.
-אסור: רמז לפתרון.
-מותר: הקושי בלבד. מגבלה פיזית רק אם בלעדיה הבעיה טריוויאלית.
+${PC.SIX_LIMITS}
 
-כלל לשם האתגר: השם חייב להיות מפתיע — לא תיאורי. שם שיוצר סקרנות בלי לחשוף את האתגר. לא "המטוטלת הנחתכת" — אלא שם שגורם לתלמיד לחשוב "מה זה בכלל?". דוגמאות טובות: "ביצת הגג", "הצעד שלא מגיע", "הכוס הרעילה". דוגמאות גרועות: "המטוטלת המסתובבת", "הכוס המתחממת".
+${PC.CHALLENGE_NAME_RULE}
 
 אסור לכתוב "מי שיודע" או "מי שלא יודע" בתוך האתגר — זה שובר את הקסם. האתגר מציג מצב ומשימה בלבד. הידע שקובע את ההצלחה נשאר בלתי נראה — כמו קסם שלא מגלה את הטריק.
 
 שאלה לפני שאתה כותב: האם האתגר נשמע בלתי אפשרי ברגע הראשון? אם לא — שנה את הניסוח עד שיישמע כך.
-שאלה לפני שאתה כותב: האם הפתרון חי בעולם אחר לגמרי מהבעיה? (ביצת הגג: הבעיה = "כיצד להגן?" הפתרון = "אנרגיה לא גדלה מעצמה".)
+${PC.SOLUTION_WORLD_QUESTION}
 שאלה לפני שאתה כותב: מה ירגיש הגוף ברגע שההנחה מתנפצת — פחד, הפתעה, בלבול? האם הגוף ילמד משהו שהראש לא יכול לספר לו?
 
 שאלה לפני שאתה כותב: מה הרגע שבו כולם בכיתה יראו שנכשלו — ולא ניתן לבטל? לא "לא הצלחנו" — משהו פיזי שקרה ואי אפשר להחזיר. הרגע הזה חייב להיות גלוי, מוחשי, ובלתי הפיך. בנה את האתגר סביבו.
@@ -2168,12 +2168,12 @@ async function _runStage1(ctx) {
     try {
       const bp1 = `הנושא: "${topic}". ההקשר הנוסף: "${teacherFacts0}".\nמצא מצב מתמטי קונקרטי שבו חישוב אחד דורש את שניהם ביחד — לא עיקרון כללי.\nענה במשפט אחד עם נוסחה או מצב מספרי ספציפי.`;
       const rb1 = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ system: bp1, userPrompt: 'מצא קשר קונקרטי.', claudeKey: CLAUDE_KEY }) });
+        body: JSON.stringify({ system: bp1, userPrompt: 'מצא קשר קונקרטי.' }) });
       let bridge = (await rb1.json()).content?.[0]?.text || '';
       if (bridge && !/\d|sin|cos|tan|√|²|×|=/.test(bridge)) {
         const bp2 = `הנושא: "${topic}". ההקשר הנוסף: "${teacherFacts0}".\nהתשובה הקודמת הייתה כללית מדי: "${bridge}"\nכתוב מצב ספציפי: מה קורה כש-${teacherFacts0} משתנה בגלל ${topic}? תן מספרים.`;
         const rb2 = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ system: bp2, userPrompt: 'תן מצב מספרי.', claudeKey: CLAUDE_KEY }) });
+          body: JSON.stringify({ system: bp2, userPrompt: 'תן מצב מספרי.' }) });
         bridge = (await rb2.json()).content?.[0]?.text || bridge;
       }
       return bridge;
@@ -2203,7 +2203,7 @@ async function _runStage1(ctx) {
 
   const [abstractAnswer, seferiaText, wikiText, bridgeRaw, historyResult, examplesResult, modelRaw] = await Promise.all([
     fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: abstractCheckPrompt, userPrompt: 'כן או לא?', claudeKey: CLAUDE_KEY })
+      body: JSON.stringify({ system: abstractCheckPrompt, userPrompt: 'כן או לא?' })
     }).then(r => r.json()).then(d => (d.content?.[0]?.text || '').trim()).catch(() => 'לא'),
     needsSefaria ? fetchSeferiaText(topic) : Promise.resolve(null),
     needsWiki ? fetchWikipediaSummary(currentRoom?._barrierExplained ? topic : (teacherFacts0 || topic)) : Promise.resolve(null),
@@ -2213,7 +2213,7 @@ async function _runStage1(ctx) {
     currentRoom?._challengeModel && currentRoom?._detectedTopic === topic
       ? Promise.resolve(currentRoom._challengeModel === 'judicial' ? 'שיפוטי' : currentRoom._challengeModel === 'artistic' ? 'אמנותי' : currentRoom._challengeModel === 'bodily' ? 'גופני' : currentRoom._challengeModel === 'prediction' ? 'ניבוי' : currentRoom._challengeModel === 'skill' ? 'מיומנות' : 'פיזי')
       : fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ system: modelDetectPrompt, userPrompt: 'מהו סוג המתח?', claudeKey: CLAUDE_KEY })
+          body: JSON.stringify({ system: modelDetectPrompt, userPrompt: 'מהו סוג המתח?' })
         }).then(r => r.json()).then(d => (d.content?.[0]?.text || '').trim().split('\n')[0]).catch(() => 'פיזי')
   ]);
 
@@ -2247,7 +2247,7 @@ async function _runStage1(ctx) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           system: `הנושא "${topic}" הוא מיומנות — הכישלון לא גלוי ישירות.\nמצא את הידע הספציפי בתוך "${topic}" שניתן לבדוק פיזית: מה יודע מי שלמד "${topic}" שמי שלא למד לא יודע — שניתן לראות את ההבדל בפעולה? ענה בידע אחד ספציפי בלבד, משפט אחד.`,
-          userPrompt: 'מהו הידע הספציפי?', claudeKey: CLAUDE_KEY
+          userPrompt: 'מהו הידע הספציפי?'
         }) });
       const _skillBridge = ((await _skillRes.json()).content?.[0]?.text || '').trim();
       if (_skillBridge) {
@@ -2339,13 +2339,13 @@ async function _runStage2(ctx) {
 
   const [concreteResult, crossResult, anchorResult] = await Promise.all([
     needsConcretize ? fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: concretizePrompt, userPrompt: 'תרגם לבעיה קונקרטית.', claudeKey: CLAUDE_KEY })
+      body: JSON.stringify({ system: concretizePrompt, userPrompt: 'תרגם לבעיה קונקרטית.' })
     }).then(r => r.json()).then(d => d.content?.[0]?.text || '').catch(() => '') : Promise.resolve(''),
     needsCross ? fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: crossPrompt, userPrompt: 'מצא את המקצוע השני.', claudeKey: CLAUDE_KEY })
+      body: JSON.stringify({ system: crossPrompt, userPrompt: 'מצא את המקצוע השני.' })
     }).then(r => r.json()).then(d => d.content?.[0]?.text || '').catch(() => '') : Promise.resolve(''),
     knowledgeAnchorPrompt ? fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: knowledgeAnchorPrompt, userPrompt: 'ענה בשלושה משפטים.', claudeKey: CLAUDE_KEY })
+      body: JSON.stringify({ system: knowledgeAnchorPrompt, userPrompt: 'ענה בשלושה משפטים.' })
     }).then(r => r.json()).then(d => d.content?.[0]?.text || '').catch(() => '') : Promise.resolve('')
   ]);
 
@@ -2411,13 +2411,7 @@ async function _runStage4(ctx) {
       q1 = `הנושא: "${topic}". מקצוע: "${subject}".${facts ? ' הקשר: ' + facts : ''}${crossDiscipline ? '\n\nמקצוע שני: ' + crossDiscipline : ''}${knowledgeAnchor ? '\n\nניתוח מקדים: ' + knowledgeAnchor : ''}
 
 מה הבעיה שצריך לפתור — לא הדגמה שצריך לבצע — שידע "${topic}" מספק את המפתח לפתרונה?
-לא "מה ייכשל בלי ידע" — אלא "מה הבעיה הפתוחה שמי שיודע פותר באופן לא צפוי?"
-הבעיה חייבת להיות: ברורה לכולם, פתיחה לגישות שונות, כזו שרוב הגישות ייכשלו — ורק גישה אחת שנובעת מהידע תצליח.
-
-דוגמה — ביצת הגג: הבעיה = הורד ביצה מגובה מטר בלי שתישבר. פתוחה, אפשר לנסות הרבה גישות. הידע פותח: בניית מנגנון בלימה.
-דוגמה — מרחק היחידה: הבעיה = מקם 20 נקודות על דף כך שמספר הזוגות במרחק 1 יהיה מקסימלי. רוב ייפזרו אקראית. הידע פותח: סריג משולשים.
-
-ענה בפורמט: [הבעיה הפתוחה] ← [הגישה שהידע פותח] ← [למה הנאיב לא יגיע אליה].`;
+${PC.OPEN_PROBLEM_SUFFIX}`;
     } else if (isKindergarten && isCreativePhysical) {
       q1 = `הנושא: "${topic}". גיל: גן. מקצוע: ${subject}.${facts ? " זווית: " + facts + "." : ""}\nמה הפעולה הפשוטה ביותר שגורמת לילד לחוות את ${topic} בגופו — לא לדמיין, לא לדבר, לעשות? ענה במשפט אחד קונקרטי.`;
     } else if (isKindergarten) {
@@ -2428,31 +2422,13 @@ async function _runStage4(ctx) {
       q1 = `הנושא: "${topic}". גיל: ג-ו. מקצוע: ${subject}.${facts ? " זווית: " + facts + "." : ""}\nמה הרגע שהגוף או החוש מגלים משהו שהמילים לא יכולות לתאר? תאר מצב שבו החוויה הפיזית היא הידע. ענה במשפט אחד קונקרטי.`;
     } else if (isHighPrimary && isScienceMath) {
       q1 = `הנושא: "${topic}". גיל: ג-ו. מקצוע מדעי.${facts ? " זווית: " + facts + "." : ""}${concreteContext ? ' ' + concreteContext : ''}\nמה הבעיה שצריך לפתור — לא הדגמה שצריך לבצע — שידע "${topic}" מספק את המפתח לפתרונה?
-לא "מה ייכשל בלי ידע" — אלא "מה הבעיה הפתוחה שמי שיודע פותר באופן לא צפוי?"
-הבעיה חייבת להיות: ברורה לכולם, פתיחה לגישות שונות, כזו שרוב הגישות ייכשלו — ורק גישה אחת שנובעת מהידע תצליח.
-
-דוגמה — ביצת הגג: הבעיה = הורד ביצה מגובה מטר בלי שתישבר. פתוחה, אפשר לנסות הרבה גישות. הידע פותח: בניית מנגנון בלימה.
-דוגמה — מרחק היחידה: הבעיה = מקם 20 נקודות על דף כך שמספר הזוגות במרחק 1 יהיה מקסימלי. רוב ייפזרו אקראית. הידע פותח: סריג משולשים.
-
-ענה בפורמט: [הבעיה הפתוחה] ← [הגישה שהידע פותח] ← [למה הנאיב לא יגיע אליה].`;
+${PC.OPEN_PROBLEM_SUFFIX}`;
     } else if (isHighPrimary) {
       q1 = `הנושא: "${topic}". גיל: ג-ו.${facts ? " זווית: " + facts + "." : ""}${concreteContext ? ' ' + concreteContext : ''}\nמה הבעיה שצריך לפתור — לא הדגמה שצריך לבצע — שידע "${topic}" מספק את המפתח לפתרונה?
-לא "מה ייכשל בלי ידע" — אלא "מה הבעיה הפתוחה שמי שיודע פותר באופן לא צפוי?"
-הבעיה חייבת להיות: ברורה לכולם, פתיחה לגישות שונות, כזו שרוב הגישות ייכשלו — ורק גישה אחת שנובעת מהידע תצליח.
-
-דוגמה — ביצת הגג: הבעיה = הורד ביצה מגובה מטר בלי שתישבר. פתוחה, אפשר לנסות הרבה גישות. הידע פותח: בניית מנגנון בלימה.
-דוגמה — מרחק היחידה: הבעיה = מקם 20 נקודות על דף כך שמספר הזוגות במרחק 1 יהיה מקסימלי. רוב ייפזרו אקראית. הידע פותח: סריג משולשים.
-
-ענה בפורמט: [הבעיה הפתוחה] ← [הגישה שהידע פותח] ← [למה הנאיב לא יגיע אליה].`;
+${PC.OPEN_PROBLEM_SUFFIX}`;
     } else if (isPhysicsScience && isSecondary) {
       const _q1Body = _q1ProblemFrame ? `מה הבעיה שצריך לפתור — לא הדגמה שצריך לבצע — שידע "${topic}" מספק את המפתח לפתרונה?
-לא "מה ייכשל בלי ידע" — אלא "מה הבעיה הפתוחה שמי שיודע פותר באופן לא צפוי?"
-הבעיה חייבת להיות: ברורה לכולם, פתיחה לגישות שונות, כזו שרוב הגישות ייכשלו — ורק גישה אחת שנובעת מהידע תצליח.
-
-דוגמה — ביצת הגג: הבעיה = הורד ביצה מגובה מטר בלי שתישבר. פתוחה, אפשר לנסות הרבה גישות. הידע פותח: בניית מנגנון בלימה.
-דוגמה — מרחק היחידה: הבעיה = מקם 20 נקודות על דף כך שמספר הזוגות במרחק 1 יהיה מקסימלי. רוב ייפזרו אקראית. הידע פותח: סריג משולשים.
-
-ענה בפורמט: [הבעיה הפתוחה] ← [הגישה שהידע פותח] ← [למה הנאיב לא יגיע אליה].` : `הנושא "${topic}" הוא עיקרון מגביל — קובע כיוון, לא פותח נתיב. צור מצב שבו שתי קבוצות פועלות — אחת בכיוון הנכון ואחת בכיוון השגוי. רק ידע "${topic}" קובע מי בצד הנכון.
+${PC.OPEN_PROBLEM_SUFFIX}` : `הנושא "${topic}" הוא עיקרון מגביל — קובע כיוון, לא פותח נתיב. צור מצב שבו שתי קבוצות פועלות — אחת בכיוון הנכון ואחת בכיוון השגוי. רק ידע "${topic}" קובע מי בצד הנכון.
 1. עם ידע "${topic}": הניבוי נכון — ויש הסבר שמדגים הבנה.
 2. בלי ידע "${topic}": הניבוי הגיוני — אבל שגוי. ההיגיון הרגיל לא מועיל.
 3. עם ידע "${topic}": הניבוי נכון — ויש הסבר שמדגים הבנה.
@@ -2476,22 +2452,22 @@ ${_analogCtx}${_crossCtx}${_coveredCtx}\n${_q1Body}`;
     } else if (isSecondary && isBibleSubject(subject) && currentRoom?._seferiaFacts) {
       const teacherNote = (currentRoom?.facts || '').replace(/\n[\s\S]*/,'').trim();
       q1 = `הנושא: "${topic}". הטקסט: ${currentRoom._seferiaFacts}\n${teacherNote
-        ? `המורה רוצה להתמקד ב: "${teacherNote}". מה כולם ירצו לעשות באופן טבעי — ורק הידע משנה את האופן שבו עושים זאת?\nלא "מה נכשל" — אלא "מה הפעולה הטבעית שהידע מכוון אותה אחרת."\nהפעולה חייבת להיות אוניברסלית — כולם היו מנסים אותה. התוצאה הפיזית חייבת להיות שונה בין מי שיודע למי שלא.\n\nדוגמה — ביצת הגג: כולם רוצים לזרוק את הביצה. הידע לא מונע את הזריקה — הוא מכוון לאן. תוצאה שונה לגמרי.\nדוגמה — ייבום + זרימת מים: כולם ירצו לשפוך את המים לכוס הראשונה שרואים. הידע אומר: יש סדר. יש מי שמגיע לפני מי. שפוך ישירות — המים לא יגיעו לתמר.\n\nענה בפורמט: [מה כולם רוצים לעשות] ← [איך הידע מכוון את הפעולה אחרת] ← [התוצאה הפיזית השונה].`
-        : `מה כולם ירצו לעשות באופן טבעי — ורק הידע משנה את האופן שבו עושים זאת?\nלא "מה נכשל" — אלא "מה הפעולה הטבעית שהידע מכוון אותה אחרת."\nהפעולה חייבת להיות אוניברסלית — כולם היו מנסים אותה. התוצאה הפיזית חייבת להיות שונה בין מי שיודע למי שלא.\n\nדוגמה — ביצת הגג: כולם רוצים לזרוק את הביצה. הידע לא מונע את הזריקה — הוא מכוון לאן. תוצאה שונה לגמרי.\nדוגמה — ייבום + זרימת מים: כולם ירצו לשפוך את המים לכוס הראשונה שרואים. הידע אומר: יש סדר. יש מי שמגיע לפני מי. שפוך ישירות — המים לא יגיעו לתמר.\n\nענה בפורמט: [מה כולם רוצים לעשות] ← [איך הידע מכוון את הפעולה אחרת] ← [התוצאה הפיזית השונה].`}`;
+        ? `המורה רוצה להתמקד ב: "${teacherNote}". ${PC.GUIDED_ACTION_FRAME}`
+        : `${PC.GUIDED_ACTION_FRAME}`}`;
     } else if (isSecondary && isHumanistic) {
       const isSocialLegal = crossDiscipline && !isScienceMath && !isCreativePhysical;
       q1 = isSocialLegal
-        ? `הנושא: "${topic}".${facts ? ' זווית ספציפית: ' + facts + '.' : ''}${knowledgeAnchor ? '\n\nניתוח מקדים:\n' + knowledgeAnchor : ''}${crossDiscipline ? '\n\nמקצוע שני + מגבלה: ' + crossDiscipline : ''}\n\nמה כולם ירצו לעשות באופן טבעי — ורק הידע משנה את האופן שבו עושים זאת?\nלא "מה נכשל" — אלא "מה הפעולה הטבעית שהידע מכוון אותה אחרת."\nהפעולה חייבת להיות אוניברסלית — כולם היו מנסים אותה. התוצאה הפיזית חייבת להיות שונה בין מי שיודע למי שלא.\n\nדוגמה — ביצת הגג: כולם רוצים לזרוק את הביצה. הידע לא מונע את הזריקה — הוא מכוון לאן. תוצאה שונה לגמרי.\nדוגמה — ייבום + זרימת מים: כולם ירצו לשפוך את המים לכוס הראשונה שרואים. הידע אומר: יש סדר. יש מי שמגיע לפני מי. שפוך ישירות — המים לא יגיעו לתמר.\n\nענה בפורמט: [מה כולם רוצים לעשות] ← [איך הידע מכוון את הפעולה אחרת] ← [התוצאה הפיזית השונה].`
-        : `הנושא: "${topic}".${facts ? ' זווית ספציפית: ' + facts + '.' : ''}${concreteContext ? ' ' + concreteContext : ''}${knowledgeAnchor ? '\n\nניתוח מקדים:\n' + knowledgeAnchor : ''}${crossDiscipline ? '\n\nמקצוע שני + מגבלה: ' + crossDiscipline : ''}\nמה הבעיה שצריך לפתור — לא הדגמה שצריך לבצע — שידע "${topic}" מספק את המפתח לפתרונה?\nלא "מה ייכשל בלי ידע" — אלא "מה הבעיה הפתוחה שמי שיודע פותר באופן לא צפוי?"\nהבעיה חייבת להיות: ברורה לכולם, פתיחה לגישות שונות, כזו שרוב הגישות ייכשלו — ורק גישה אחת שנובעת מהידע תצליח.\n\nדוגמה — ביצת הגג: הבעיה = הורד ביצה מגובה מטר בלי שתישבר. פתוחה, אפשר לנסות הרבה גישות. הידע פותח: בניית מנגנון בלימה.\nדוגמה — מרחק היחידה: הבעיה = מקם 20 נקודות על דף כך שמספר הזוגות במרחק 1 יהיה מקסימלי. רוב ייפזרו אקראית. הידע פותח: סריג משולשים.\n\nענה בפורמט: [הבעיה הפתוחה] ← [הגישה שהידע פותח] ← [למה הנאיב לא יגיע אליה].`;
+        ? `הנושא: "${topic}".${facts ? ' זווית ספציפית: ' + facts + '.' : ''}${knowledgeAnchor ? '\n\nניתוח מקדים:\n' + knowledgeAnchor : ''}${crossDiscipline ? '\n\nמקצוע שני + מגבלה: ' + crossDiscipline : ''}\n\n${PC.GUIDED_ACTION_FRAME}`
+        : `הנושא: "${topic}".${facts ? ' זווית ספציפית: ' + facts + '.' : ''}${concreteContext ? ' ' + concreteContext : ''}${knowledgeAnchor ? '\n\nניתוח מקדים:\n' + knowledgeAnchor : ''}${crossDiscipline ? '\n\nמקצוע שני + מגבלה: ' + crossDiscipline : ''}\nמה הבעיה שצריך לפתור — לא הדגמה שצריך לבצע — שידע "${topic}" מספק את המפתח לפתרונה?\n${PC.OPEN_PROBLEM_SUFFIX}`;
     } else if (isHumanistic) {
-      q1 = `הנושא: "${topic}".${facts ? ' זווית ספציפית: ' + facts + '.' : ''}${concreteContext ? ' ' + concreteContext : ''}${knowledgeAnchor ? '\n\nניתוח מקדים:\n' + knowledgeAnchor : ''}${crossDiscipline ? '\n\nמקצוע שני + מגבלה: ' + crossDiscipline : ''}\nמה הבעיה שצריך לפתור — לא הדגמה שצריך לבצע — שידע "${topic}" מספק את המפתח לפתרונה?\nלא "מה ייכשל בלי ידע" — אלא "מה הבעיה הפתוחה שמי שיודע פותר באופן לא צפוי?"\nהבעיה חייבת להיות: ברורה לכולם, פתיחה לגישות שונות, כזו שרוב הגישות ייכשלו — ורק גישה אחת שנובעת מהידע תצליח.\n\nדוגמה — ביצת הגג: הבעיה = הורד ביצה מגובה מטר בלי שתישבר. פתוחה, אפשר לנסות הרבה גישות. הידע פותח: בניית מנגנון בלימה.\nדוגמה — מרחק היחידה: הבעיה = מקם 20 נקודות על דף כך שמספר הזוגות במרחק 1 יהיה מקסימלי. רוב ייפזרו אקראית. הידע פותח: סריג משולשים.\n\nענה בפורמט: [הבעיה הפתוחה] ← [הגישה שהידע פותח] ← [למה הנאיב לא יגיע אליה].`;
+      q1 = `הנושא: "${topic}".${facts ? ' זווית ספציפית: ' + facts + '.' : ''}${concreteContext ? ' ' + concreteContext : ''}${knowledgeAnchor ? '\n\nניתוח מקדים:\n' + knowledgeAnchor : ''}${crossDiscipline ? '\n\nמקצוע שני + מגבלה: ' + crossDiscipline : ''}\nמה הבעיה שצריך לפתור — לא הדגמה שצריך לבצע — שידע "${topic}" מספק את המפתח לפתרונה?\n${PC.OPEN_PROBLEM_SUFFIX}`;
     } else if (isSecondary) {
       const _q1BodySec = _q1ProblemFrame
-        ? `מה הבעיה שצריך לפתור — לא הדגמה שצריך לבצע — שידע "${topic}" מספק את המפתח לפתרונה?\nלא "מה ייכשל בלי ידע" — אלא "מה הבעיה הפתוחה שמי שיודע פותר באופן לא צפוי?"\nהבעיה חייבת להיות: ברורה לכולם, פתיחה לגישות שונות, כזו שרוב הגישות ייכשלו — ורק גישה אחת שנובעת מהידע תצליח.\n\nדוגמה — ביצת הגג: הבעיה = הורד ביצה מגובה מטר בלי שתישבר. פתוחה, אפשר לנסות הרבה גישות. הידע פותח: בניית מנגנון בלימה.\nדוגמה — מרחק היחידה: הבעיה = מקם 20 נקודות על דף כך שמספר הזוגות במרחק 1 יהיה מקסימלי. רוב ייפזרו אקראית. הידע פותח: סריג משולשים.\n\nענה בפורמט: [הבעיה הפתוחה] ← [הגישה שהידע פותח] ← [למה הנאיב לא יגיע אליה].`
+        ? `מה הבעיה שצריך לפתור — לא הדגמה שצריך לבצע — שידע "${topic}" מספק את המפתח לפתרונה?\n${PC.OPEN_PROBLEM_SUFFIX}`
         : `מה כולם ינסו — ויגלו שלא ניתן — ורק הידע של "${topic}" מסביר למה?\nצור מצב שבו התלמיד יגלה שהנחתו עצמה הייתה שגויה — לא רק שהתשובה הייתה שגויה. הרגע שבו ההנחה מתנפצת פיזית — זה האתגר.\nהניסיון הנאיבי חייב להיות טבעי ואוניברסלי. הכישלון גלוי ומוחשי. הידע לא פותח פתרון — הוא מסביר את הגבול.\n\nענה בפורמט: [מה כולם ינסו] ← [הכישלון הגלוי] ← [מה הידע מסביר].`;
       q1 = `הנושא: "${topic}".${facts ? " זווית: " + facts + "." : ""}${concreteContext ? ' ' + concreteContext : ''}${bridgeContext ? ' גשר: ' + bridgeContext : ''}${knowledgeAnchor ? '\n\nניתוח מקדים:\n' + knowledgeAnchor : ''}${_analogCtx}${_crossCtx}${_coveredCtx}\n${_q1BodySec}`;
     } else {
-      q1 = `הנושא: "${topic}".${facts ? " זווית: " + facts + "." : ""}${concreteContext ? ' ' + concreteContext : ''}${bridgeContext ? ' גשר: ' + bridgeContext : ''}\nמה הבעיה שצריך לפתור — לא הדגמה שצריך לבצע — שידע "${topic}" מספק את המפתח לפתרונה?\nלא "מה ייכשל בלי ידע" — אלא "מה הבעיה הפתוחה שמי שיודע פותר באופן לא צפוי?"\nהבעיה חייבת להיות: ברורה לכולם, פתיחה לגישות שונות, כזו שרוב הגישות ייכשלו — ורק גישה אחת שנובעת מהידע תצליח.\n\nדוגמה — ביצת הגג: הבעיה = הורד ביצה מגובה מטר בלי שתישבר. פתוחה, אפשר לנסות הרבה גישות. הידע פותח: בניית מנגנון בלימה.\nדוגמה — מרחק היחידה: הבעיה = מקם 20 נקודות על דף כך שמספר הזוגות במרחק 1 יהיה מקסימלי. רוב ייפזרו אקראית. הידע פותח: סריג משולשים.\n\nענה בפורמט: [הבעיה הפתוחה] ← [הגישה שהידע פותח] ← [למה הנאיב לא יגיע אליה].`;
+      q1 = `הנושא: "${topic}".${facts ? " זווית: " + facts + "." : ""}${concreteContext ? ' ' + concreteContext : ''}${bridgeContext ? ' גשר: ' + bridgeContext : ''}\nמה הבעיה שצריך לפתור — לא הדגמה שצריך לבצע — שידע "${topic}" מספק את המפתח לפתרונה?\n${PC.OPEN_PROBLEM_SUFFIX}`;
     }
 
     const q1Examples = (currentRoom?._semanticExamples || currentRoom?._approvedExamples || []).slice(0, 3)
@@ -2501,7 +2477,7 @@ ${_analogCtx}${_crossCtx}${_coveredCtx}\n${_q1Body}`;
     const q1q2Suffix = _wrongBeliefCtx + q1ExamplesCtx + '\n\nענה בפורמט:\nרגע: [הבעיה הפתוחה בלבד — מה הקבוצה צריכה להשיג. אסור לכתוב את הפתרון, אסור לכתוב "הפתרון:", אסור לרמוז על הגישה הנכונה.]\nכישלון: [מה קורה גופנית למי שלא למד — הכישלון הגלוי לכולם בלי פרשנות. אם חפץ פיזי מוחשי את הכישלון — שלב אחד מהרשימה: ביצה, חבל, מטבעות, כדור טניס, בקבוק מים, קש, גומייה, נייר A4, סרגל, קוביות.]';
 
     const res1 = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: q1 + q1q2Suffix, userPrompt: 'מהו הרגע והכישלון?', claudeKey: CLAUDE_KEY }) });
+      body: JSON.stringify({ system: q1 + q1q2Suffix, userPrompt: 'מהו הרגע והכישלון?' }) });
     const q1q2Raw   = (await res1.json()).content?.[0]?.text || '';
     const momentMatch  = q1q2Raw.match(/רגע:\s*(.+?)(?=\nכישלון:|$)/s);
     const failureMatch = q1q2Raw.match(/כישלון:\s*(.+)/s);
@@ -2537,7 +2513,7 @@ async function _runStage45(ctx) {
     try {
       const mkRes = await fetch('/api/claude', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ system: midKernelPrompt, userPrompt: 'מהו הרגע?', claudeKey: CLAUDE_KEY })
+        body: JSON.stringify({ system: midKernelPrompt, userPrompt: 'מהו הרגע?' })
       });
       const mkText = ((await mkRes.json()).content?.[0]?.text || '').trim();
       if (mkText) currentRoom._midKernel = mkText;
@@ -2548,7 +2524,7 @@ async function _runStage45(ctx) {
   if ((currentRoom?._challengeModel || 'physical') === 'physical' && impossibleMoment) try {
     const kernelPrompt = `הנושא: "${topic}".\n${knowledgeAnchor ? 'חפירה מקדימה:\n' + knowledgeAnchor + '\n' : ''}רגע שנמצא: ${impossibleMoment}\n\nמצא את הרגע הבודד — לא אתגר, לא הסבר — רק הרגע הספציפי שבו הכישלון מוחשי ובלתי הפיך.\nאם הרגע שנמצא לא ממשי — בחר רגע אחר שניתן לשחזר בכיתה בחמש דקות.\n\nפורמט:\nגוף/חפץ: [מה בדיוק נכשל — גוף, חפץ, ניסוי]\nרגע: [משפט אחד שמתאר בדיוק מה קורה — מה כולם רואים]\nבלתי_הפיך: [מה קרה שאי אפשר להחזיר — הרגע שלא ניתן לבטל]`;
     const kernelRes = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: kernelPrompt, userPrompt: 'חלץ את הרגע.', claudeKey: CLAUDE_KEY }) });
+      body: JSON.stringify({ system: kernelPrompt, userPrompt: 'חלץ את הרגע.' }) });
     const kernelRaw = (await kernelRes.json()).content?.[0]?.text || '';
     const gufMatch = kernelRaw.match(/גוף\/חפץ:\s*(.+?)(?=\nרגע:|$)/s);
     const regatMatch = kernelRaw.match(/רגע:\s*(.+?)(?=\nבלתי_הפיך:|$)/s);
@@ -2566,7 +2542,7 @@ async function _runStage45(ctx) {
       ? `הנושא הוא עיקרון מגביל — קובע כיוון, לא מספר. מצא ניסוי שבו האינטואיציה מראה כיוון שגוי, וידע "${topic}" מסביר את הכיוון הנכון.\n\nפורמט:\nניסוי: [מה קורה פיזית בכיתה — משפט אחד ספציפי]\nניבוי_נאיבי: [מה כולם יחשבו שיקרה — ולמה זה נראה הגיוני]\nכיוון_אמיתי: [מה קורה בפועל — ידע "${topic}" הוא הדבר היחיד שמנבא זאת]\nהסבר_הידע: [משפט אחד: למה ידע "${topic}" קובע את הכיוון הנכון]`
       : `מצא את הניבוי הבודד — לא אתגר, לא הסבר — רק הרגע שבו הניבוי האינטואיטיבי וודאי שגוי, וידע "${topic}" לבד מתקן אותו.\n\nפורמט:\nניסוי: [מה בדיוק קורה פיזית בכיתה — משפט אחד]\nניבוי_נאיבי: [מה כולם ינבאו בלי ידע "${topic}" — ספציפי, לא כללי]\nקביעה: [מה יוצא בפועל — ידע "${topic}" הוא הדבר היחיד שמנבא זאת נכון]`}`;
     const pkRes = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: predKernelPrompt, userPrompt: 'חלץ את הניבוי.', claudeKey: CLAUDE_KEY }) });
+      body: JSON.stringify({ system: predKernelPrompt, userPrompt: 'חלץ את הניבוי.' }) });
     const pkRaw = (await pkRes.json()).content?.[0]?.text || '';
     if (_isLimitingForKernel) {
       const expMatch2   = pkRaw.match(/ניסוי:\s*(.+?)(?=\nניבוי_נאיבי:|$)/s);
@@ -2590,7 +2566,7 @@ async function _runStage45(ctx) {
   if ((currentRoom?._challengeModel || 'physical') === 'prediction' && _isGameTheory) try {
     const nashKernelPrompt = `הנושא: "${topic}".\n${facts ? 'הקשר: ' + facts : ''}\n\nבנה מטריצת תגמולים קונקרטית לחלוטין — שני שחקנים, שתי אסטרטגיות כל אחד, ארבעה תגמולים מספריים.\nהמטריצה חייבת לגרום לכך שהבחירה האינטואיטיבית (מה שנראה הגיוני) שונה משיווי המשקל (מה שידע "${topic}" מנבא).\n\nפורמט:\nמטריצה: [שחקן_א בוחר: X או Y. שחקן_ב בוחר: X או Y. תגמולים: XX=(a,b), XY=(c,d), YX=(e,f), YY=(g,h).]\nבחירה_נאיבית: [מה רוב התלמידים יבחרו — ולמה זה נראה הגיוני]\nשיווי_משקל: [מה תוצאת שיווי המשקל בפועל — ולמה היא מפתיעה]\nמפתיע: [המשפט שגורם לתלמיד לומר "רגע, אבל..." — ההפתעה הספציפית]`;
     const nashRes = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: nashKernelPrompt, userPrompt: 'בנה את המטריצה.', claudeKey: CLAUDE_KEY }) });
+      body: JSON.stringify({ system: nashKernelPrompt, userPrompt: 'בנה את המטריצה.' }) });
     const nashRaw = (await nashRes.json()).content?.[0]?.text || '';
     const matrixMatch    = nashRaw.match(/מטריצה:\s*(.+?)(?=\nבחירה_נאיבית:|$)/s);
     const naiveNashMatch = nashRaw.match(/בחירה_נאיבית:\s*(.+?)(?=\nשיווי_משקל:|$)/s);
@@ -2605,7 +2581,7 @@ async function _runStage45(ctx) {
   if ((currentRoom?._challengeModel || 'physical') === 'bodily') try {
     const bodilyKernelPrompt = `הנושא: "${topic}".\n${facts ? 'הקשר: ' + facts : ''}\n\nמצא את הרגע הגופני הבודד — לא אתגר, לא הסבר — רק הרגע שבו הגוף מגלה מה שהמוח לא יכול להסביר.\n\nפורמט:\nתנועה: [מה בדיוק הגוף מנסה לעשות — משפט אחד, קונקרטי]\nכישלון_גופני: [מה הגוף מרגיש כשהוא נכשל — לא "לא הצליח", תחושה פיזית ספציפית]\nבלתי_הפיך: [מה הגוף למד ששום הסבר מילולי לא יכול להחליף]`;
     const bkRes = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: bodilyKernelPrompt, userPrompt: 'חלץ את הרגע הגופני.', claudeKey: CLAUDE_KEY }) });
+      body: JSON.stringify({ system: bodilyKernelPrompt, userPrompt: 'חלץ את הרגע הגופני.' }) });
     const bkRaw = (await bkRes.json()).content?.[0]?.text || '';
     const mvMatch = bkRaw.match(/תנועה:\s*(.+?)(?=\nכישלון_גופני:|$)/s);
     const bfMatch = bkRaw.match(/כישלון_גופני:\s*(.+?)(?=\nבלתי_הפיך:|$)/s);
@@ -2620,7 +2596,7 @@ async function _runStage45(ctx) {
     const _hasCanonical = !!(currentRoom?._seferiaFacts) || !!(currentRoom?.facts);
     if (!_hasCanonical) {
       const _canonRes = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ system: `הנושא: "${topic}". האם קיים טקסט קנוני — פסוק, חוק, יצירה ספרותית, פסיקה — שמכיל סכסוך שניתן להכריע ממנו לפי הטקסט עצמו? ענה "כן" או "לא" בלבד.`, userPrompt: 'כן או לא?', claudeKey: CLAUDE_KEY }) });
+        body: JSON.stringify({ system: `הנושא: "${topic}". האם קיים טקסט קנוני — פסוק, חוק, יצירה ספרותית, פסיקה — שמכיל סכסוך שניתן להכריע ממנו לפי הטקסט עצמו? ענה "כן" או "לא" בלבד.`, userPrompt: 'כן או לא?' }) });
       const _canonTxt = ((await _canonRes.json()).content?.[0]?.text || '').trim();
       if (_canonTxt.startsWith('לא')) { currentRoom._challengeModel = 'physical'; currentRoom._lastUsedModel = 'physical'; }
     }
@@ -2631,7 +2607,7 @@ async function _runStage45(ctx) {
     const teacherCtx  = currentRoom?.facts ? 'הקשר המורה: ' + currentRoom.facts : '';
     const judicialKernelPrompt = `הנושא: "${topic}". ${seferiaCtx}\n${teacherCtx}\n\nמצא את ההכרעה הבודדת — לא אתגר, לא הסבר — רק הרגע שבו הקבוצה מוכרחת להחליט ולא יכולה לחזור.\n\nפורמט:\nעמדה_חלשה: [העמדה שנראית חלשה במבט ראשון — אבל הטקסט תומך בה ספציפית]\nפרט_מכריע: [הפרט הטקסטואלי הספציפי שמהפך את ההכרעה — לא מוסר כללי]\nבלתי_הפיך: [ההכרעה הקולקטיבית שמשמיעים בקול — ואי אפשר לחזור ממנה]`;
     const jkRes = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: judicialKernelPrompt, userPrompt: 'חלץ את ההכרעה.', claudeKey: CLAUDE_KEY }) });
+      body: JSON.stringify({ system: judicialKernelPrompt, userPrompt: 'חלץ את ההכרעה.' }) });
     const jkRaw = (await jkRes.json()).content?.[0]?.text || '';
     const weakMatch   = jkRaw.match(/עמדה_חלשה:\s*(.+?)(?=\nפרט_מכריע:|$)/s);
     const detailMatch = jkRaw.match(/פרט_מכריע:\s*(.+?)(?=\nבלתי_הפיך:|$)/s);
@@ -2707,13 +2683,13 @@ async function _runStage5(ctx) {
   const userPromptForFast = _buildParts(_nextSeedIdx);
   const _seed2Idx = (_nextSeedIdx + 1) % _varietySeeds.length;
   const _candidate2Promise = fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ system: fastPrompt, userPrompt: _buildParts(_seed2Idx), claudeKey: CLAUDE_KEY })
+    body: JSON.stringify({ system: fastPrompt, userPrompt: _buildParts(_seed2Idx) })
   }).catch(() => null);
 
   let fastResult = '';
   try {
     const resFast = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: fastPrompt, userPrompt: userPromptForFast, claudeKey: CLAUDE_KEY }) });
+      body: JSON.stringify({ system: fastPrompt, userPrompt: userPromptForFast }) });
     fastResult = (await resFast.json()).content?.[0]?.text || '';
   } catch(e) { console.error('Generation failed:', e); }
 
@@ -2780,7 +2756,7 @@ ${physicalCriteria || judicialCriteria || artisticCriteria}
 
   try {
     const resEC = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ system: enrichAndCheckPrompt, userPrompt: fastResult, claudeKey: CLAUDE_KEY }) });
+      body: JSON.stringify({ system: enrichAndCheckPrompt, userPrompt: fastResult }) });
     const enrichedRaw = (await resEC.json()).content?.[0]?.text || '';
     if (!enrichedRaw) return fastResult;
 
@@ -2797,7 +2773,7 @@ ${physicalCriteria || judicialCriteria || artisticCriteria}
           const _fastResult2 = (await (_res2.clone ? _res2.clone() : _res2).json()).content?.[0]?.text || '';
           if (_fastResult2) {
             const _resEC2 = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ system: enrichAndCheckPrompt, userPrompt: _fastResult2, claudeKey: CLAUDE_KEY }) });
+              body: JSON.stringify({ system: enrichAndCheckPrompt, userPrompt: _fastResult2 }) });
             const _enriched2Raw = (await _resEC2.json()).content?.[0]?.text || '';
             const _status2 = _enriched2Raw.match(/סטטוס:\s*(עובר|נכשל[^\n]*)/);
             if (_status2?.[1]?.startsWith('עובר')) {
@@ -2837,7 +2813,7 @@ ${physicalCriteria || judicialCriteria || artisticCriteria}
           const _fastResult2 = (await _res2.json()).content?.[0]?.text || '';
           if (_fastResult2) {
             const _resEC2 = await fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
-              body: JSON.stringify({ system: enrichAndCheckPrompt, userPrompt: _fastResult2, claudeKey: CLAUDE_KEY }) });
+              body: JSON.stringify({ system: enrichAndCheckPrompt, userPrompt: _fastResult2 }) });
             const _enriched2Raw = (await _resEC2.json()).content?.[0]?.text || '';
             const _status2 = _enriched2Raw.match(/סטטוס:\s*(עובר|נכשל[^\n]*)/);
             if (_status2?.[1]?.startsWith('עובר')) {
@@ -2872,7 +2848,7 @@ async function callClaude() {
 
   const s5 = await _runStage5(ctx);
   if (!s5 || !s5.fastResult) {
-    if (!CLAUDE_KEY) return '❌ מפתח API חסר — נסה להתנתק ולהתחבר מחדש';
+
     return '❌ שגיאה בייצור האתגר';
   }
   return await _runStage6(ctx, s5.fastResult, s5.candidate2Promise);
@@ -2971,7 +2947,7 @@ async function rebuildWithNote(challenge, topic, failReason, groupSize, grades) 
 השמור על אותו פורמט: שם: [...] אתגר: [...]`;
     const res = await fetch('/api/claude', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system: rebuildPrompt, userPrompt: challenge, claudeKey: CLAUDE_KEY })
+      body: JSON.stringify({ system: rebuildPrompt, userPrompt: challenge })
     });
     const rebuilt = (await res.json()).content?.[0]?.text || '';
     console.log(`[pandora] rebuildWithNote: rebuilt ${rebuilt.length} chars`);
@@ -3002,7 +2978,7 @@ async function qualityCheck(challenge, topic, groupSize, grades) {
 חשוב: אתגר שלא מזכיר את "${topic}" בשום צורה — נכשל תמיד, גם אם נראה יפה.
 ענה בשורה אחת בלבד: "עובר: ..." או "נכשל: ..."`,
         userPrompt: challenge,
-        claudeKey: CLAUDE_KEY
+        
       })
     });
     const fpTxt = (await topicFingerprintRes.json()).content?.[0]?.text || '';
@@ -3071,7 +3047,7 @@ ${physicalOnlyCriteria}
         const resCtx = await fetch('/api/claude', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ system: rebuildSystem, userPrompt: `האתגר הקודם נכשל: ${reason}. צור אתגר חדש שבו "${contextStr}" מופיע בשמו כמוקד מרכזי.`, claudeKey: CLAUDE_KEY })
+          body: JSON.stringify({ system: rebuildSystem, userPrompt: `האתגר הקודם נכשל: ${reason}. צור אתגר חדש שבו "${contextStr}" מופיע בשמו כמוקד מרכזי.` })
         });
         const dataCtx = await resCtx.json();
         return await fixLanguage(dataCtx.content?.[0]?.text || challenge);
@@ -3086,7 +3062,7 @@ ${physicalOnlyCriteria}
       const res1 = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ system: checkOnlyPrompt, userPrompt: challenge, claudeKey: CLAUDE_KEY })
+        body: JSON.stringify({ system: checkOnlyPrompt, userPrompt: challenge })
       });
       const data1 = await res1.json();
       verdict = (data1.content?.[0]?.text || '').trim();
@@ -3118,7 +3094,7 @@ ${physicalOnlyCriteria}
     const res2 = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system: rebuildSystem2, userPrompt: `האתגר הקודם נכשל: ${reason2}.${_kdoFail} צור אתגר חדש לגמרי.${currentRoom?.facts ? ' חובה: ' + currentRoom.facts + ' חייב להיות מוקד מרכזי.' : ''}${_compHint}${_teacherHint}`, claudeKey: CLAUDE_KEY })
+      body: JSON.stringify({ system: rebuildSystem2, userPrompt: `האתגר הקודם נכשל: ${reason2}.${_kdoFail} צור אתגר חדש לגמרי.${currentRoom?.facts ? ' חובה: ' + currentRoom.facts + ' חייב להיות מוקד מרכזי.' : ''}${_compHint}${_teacherHint}` })
     });
     const data2 = await res2.json();
     const rebuilt2 = data2.content?.[0]?.text || currentChallenge;
@@ -3143,7 +3119,7 @@ ${physicalOnlyCriteria}
     const res3q = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system: q3, userPrompt: 'מצא את הרגע ההיסטורי.', claudeKey: CLAUDE_KEY })
+      body: JSON.stringify({ system: q3, userPrompt: 'מצא את הרגע ההיסטורי.' })
     });
     const data3q = await res3q.json();
     const historicalMoment = data3q.content?.[0]?.text || '';
@@ -3152,7 +3128,7 @@ ${physicalOnlyCriteria}
     const res3 = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system: fastPrompt3, userPrompt: `צור אתגר עכשיו. הרגע הפיזי ההיסטורי: ${historicalMoment}${currentRoom?.facts ? ' חובה: ' + currentRoom.facts + ' מוקד מרכזי.' : ''}`, claudeKey: CLAUDE_KEY })
+      body: JSON.stringify({ system: fastPrompt3, userPrompt: `צור אתגר עכשיו. הרגע הפיזי ההיסטורי: ${historicalMoment}${currentRoom?.facts ? ' חובה: ' + currentRoom.facts + ' מוקד מרכזי.' : ''}` })
     });
     const data3 = await res3.json();
     const rebuilt3 = data3.content?.[0]?.text || currentChallenge;
@@ -3172,7 +3148,7 @@ ${physicalOnlyCriteria}
     const resMin = await fetch('/api/claude', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system: minCheckPrompt, userPrompt: rebuilt3, claudeKey: CLAUDE_KEY })
+      body: JSON.stringify({ system: minCheckPrompt, userPrompt: rebuilt3 })
     });
     const dataMin = await resMin.json();
     const minVerdict = (dataMin.content?.[0]?.text || '').trim();
@@ -3206,7 +3182,7 @@ ${physicalOnlyCriteria}
       const res4 = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ system: adapt4, userPrompt: _adapt4UserPrompt, claudeKey: CLAUDE_KEY })
+        body: JSON.stringify({ system: adapt4, userPrompt: _adapt4UserPrompt })
       });
       const data4 = await res4.json();
       const rebuilt4 = data4.content?.[0]?.text || currentChallenge;
@@ -3230,7 +3206,7 @@ async function knowledgeDeterminesOutcome(challengeText, topic) {
       body: JSON.stringify({
         system: `הנושא: "${topic}".\nקרא את האתגר וענה על שאלה אחת:\nמה הרגע הספציפי שבו תלמיד שלמד "${topic}" עושה פעולה שונה מתלמיד שלא למד — ופעולה זו קובעת את התוצאה?\n\nאם אין רגע כזה — ענה "נכשל: [סיבה]".\nאם יש — ענה "עובר: [תאר מה הידע קובע]".`,
         userPrompt: challengeText,
-        claudeKey: CLAUDE_KEY
+        
       })
     });
     const txt = (await res.json()).content?.[0]?.text || '';
@@ -3281,7 +3257,7 @@ async function adversarialTest(challengeText, topic) {
 או:
 נכשל: [תאר בדיוק מה חוסם אותך — מה לא ניתן בלי ידע ספציפי]`,
         userPrompt: challengeText,
-        claudeKey: CLAUDE_KEY
+        
       })
     });
     const txt = (await res.json()).content?.[0]?.text || '';
@@ -3303,7 +3279,7 @@ async function gossipTest(challengeText, topic) {
 📚 אתגר בסדר
 😴 שיעורי בית רגיל`,
         userPrompt: challengeText,
-        claudeKey: CLAUDE_KEY
+        
       })
     });
     const txt = (await res.json()).content?.[0]?.text || '';
@@ -3332,7 +3308,7 @@ ${criterion3}
 ציון: 5 = כיתה תפרוץ. 4 = טוב מאוד. 3 = סביר. 2 = תקין בלבד.
 ענה מספר בלבד: 5 / 4 / 3 / 2`,
         userPrompt: challengeText,
-        claudeKey: CLAUDE_KEY
+        
       })
     });
     const txt = (await res.json()).content?.[0]?.text || '3';
@@ -3366,7 +3342,7 @@ async function fixLanguage(text) {
         system: `תקן שגיאות עברית בלבד: מין (זכר/נקבה), גוף (יחיד/רבים), זמן (עבר/הווה/עתיד), הסכמה בין נושא לנשוא.
 אל תשנה תוכן. אל תוסיף מילה. אל תשנה משפטים שלמים. החזר את הטקסט המתוקן בלבד — ללא הסברים.`,
         userPrompt: mechanical,
-        claudeKey: CLAUDE_KEY
+        
       })
     });
     return (await res.json()).content?.[0]?.text || mechanical;
@@ -3747,7 +3723,7 @@ async function loadApprovedExamples(subject, mode, grades) {
             body: JSON.stringify({
               system: `הנושא המבוקש: "${topic}". מתוך הרשימה הבאה, בחר את 3 הנושאים הקרובים ביותר מבחינה מושגית — גם אם לא זהים. ענה רק בשמות הנושאים, שורה לכל נושא:\n${topicList.join('\n')}`,
               userPrompt: '3 נושאים קרובים.',
-              claudeKey: CLAUDE_KEY
+              
             })
           });
           const semData = await semRes.json();
