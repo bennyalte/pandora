@@ -1,0 +1,3381 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>פנדורה ⚡</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+<style>
+:root {
+  --bg: #F5F1E8;
+  --surface: #FBF8F2;
+  --surface2: #EDE7D8;
+  --surface3: #E3DBC8;
+  --border: rgba(26,24,21,0.10);
+  --border2: rgba(26,24,21,0.18);
+  --text: #1A1815;
+  --text2: #6b6558;
+  --text3: #a19a88;
+  --accent: #A83232;
+  --accent-light: #C24A4A;
+  --pink: #B5654A;
+  --teal: #3D5C4A;
+  --amber: #A67C27;
+  --red: #C23B3B;
+  --radius: 18px;
+  --radius-sm: 11px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'Heebo',sans-serif;background:var(--bg);color:var(--text);direction:rtl;overflow-x:hidden;}
+
+/* SHELL */
+.shell{max-width:460px;margin:0 auto;min-height:100vh;position:relative;}
+
+/* SCREENS */
+.screen{display:none;padding:24px 18px 60px;min-height:100vh;animation:fadeUp .28s ease;}
+.screen.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+/* BACKGROUND */
+.bg-orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.1;pointer-events:none;z-index:0;}
+.orb1{width:360px;height:360px;background:var(--accent);top:-120px;right:-120px;}
+.orb2{width:280px;height:280px;background:var(--pink);bottom:80px;left:-80px;}
+.orb3{width:200px;height:200px;background:var(--teal);top:50%;left:50%;transform:translate(-50%,-50%);}
+.screen>*{position:relative;z-index:1;}
+
+/* TYPE */
+h1{font-size:26px;font-weight:900;line-height:1.2;margin-bottom:6px;}
+h2{font-size:20px;font-weight:700;line-height:1.3;margin-bottom:6px;}
+h3{font-size:16px;font-weight:600;margin-bottom:4px;}
+p{font-size:14px;color:var(--text2);line-height:1.7;}
+small{font-size:12px;color:var(--text3);}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.logo-sm{font-size:14px;font-weight:900;color:var(--accent);letter-spacing:.05em;}
+.back{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:7px 13px;font-size:12px;color:var(--text2);cursor:pointer;font-family:'Heebo',sans-serif;transition:.2s;}
+.back:hover{color:var(--text);}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:12px;}
+.b-purple{background:rgba(168,50,50,.15);color:var(--accent-light);border:1px solid rgba(168,50,50,.3);}
+.b-pink{background:rgba(181,101,74,.15);color:var(--pink);border:1px solid rgba(181,101,74,.3);}
+.b-teal{background:rgba(61,92,74,.15);color:var(--teal);border:1px solid rgba(61,92,74,.3);}
+.b-amber{background:rgba(166,124,39,.15);color:var(--amber);border:1px solid rgba(166,124,39,.3);}
+.b-red{background:rgba(194,59,59,.15);color:var(--red);border:1px solid rgba(194,59,59,.3);}
+.b-live{background:rgba(194,59,59,.2);color:var(--red);border:1px solid rgba(194,59,59,.4);animation:livePulse 1.5s ease infinite;}
+@keyframes livePulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;}
+.card-glow{background:linear-gradient(135deg,rgba(168,50,50,.12),rgba(181,101,74,.08));border-color:rgba(168,50,50,.25);}
+
+/* INPUTS */
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11px;color:var(--text2);margin-bottom:7px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;}
+input[type=text],input[type=email],input[type=password],textarea,select{
+  width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text);font-family:'Heebo',sans-serif;font-size:14px;
+  transition:.2s;direction:rtl;
+}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(168,50,50,.12);}
+textarea{resize:none;height:80px;line-height:1.6;}
+.code-input{text-align:center;font-family:'Space Mono',monospace;font-size:26px;letter-spacing:7px;font-weight:700;}
+
+/* BUTTONS */
+.btn{display:block;width:100%;padding:13px 18px;border-radius:var(--radius-sm);font-family:'Heebo',sans-serif;font-size:15px;font-weight:700;cursor:pointer;text-align:center;transition:.2s;border:none;margin-top:8px;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#8a2828;transform:translateY(-1px);box-shadow:0 8px 24px rgba(168,50,50,.35);}
+.btn-pink{background:var(--pink);color:#fff;}
+.btn-pink:hover{background:#9a5240;transform:translateY(-1px);box-shadow:0 8px 24px rgba(181,101,74,.35);}
+.btn-teal{background:var(--teal);color:#F5F1E8;}
+.btn-teal:hover{background:#00bfa0;}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-outline:hover{background:var(--surface2);color:var(--text);}
+.btn-sm{padding:8px 14px;font-size:13px;width:auto;display:inline-block;margin-top:0;}
+.btn-danger{background:var(--red);color:#fff;}
+
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px;}
+.chip{padding:6px 13px;border-radius:100px;font-size:13px;border:1px solid var(--border2);color:var(--text2);cursor:pointer;transition:.2s;background:transparent;font-family:'Heebo',sans-serif;}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip.on{background:rgba(168,50,50,.18);border-color:var(--accent);color:var(--accent);font-weight:700;}
+
+/* TIMER */
+.timer-wrap{text-align:center;margin:20px 0;}
+.timer-num{font-family:'Space Mono',monospace;font-size:68px;font-weight:700;line-height:1;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.timer-num.urgent{background:linear-gradient(135deg,var(--red),var(--amber));-webkit-background-clip:text;background-clip:text;}
+.timer-lbl{font-size:12px;color:var(--text3);margin-top:5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
+
+/* CODE BOX */
+.code-box{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:22px;text-align:center;margin:14px 0;}
+.code-val{font-family:'Space Mono',monospace;font-size:42px;font-weight:700;letter-spacing:10px;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+/* CHALLENGE CARD */
+.challenge-wrap{background:linear-gradient(135deg,rgba(168,50,50,.15),rgba(181,101,74,.1));border:1px solid rgba(168,50,50,.3);border-radius:var(--radius);padding:22px;margin:14px 0;}
+.challenge-lbl{font-size:11px;color:var(--accent-light);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;}
+.challenge-txt{font-size:17px;font-weight:600;line-height:1.65;color:var(--text);}
+
+/* MODE CARDS (3 teacher options) */
+.mode-grid{display:flex;flex-direction:column;gap:10px;margin:14px 0;}
+.mode-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:18px;cursor:pointer;transition:.25s;text-align:right;}
+.mode-card:hover{border-color:var(--accent);background:var(--surface2);}
+.mode-card.selected{border-color:var(--accent);background:rgba(168,50,50,.1);}
+.mode-icon{font-size:26px;margin-bottom:8px;}
+.mode-title{font-size:15px;font-weight:700;margin-bottom:3px;}
+.mode-desc{font-size:13px;color:var(--text2);}
+
+/* STEP LIST */
+.steps{list-style:none;}
+.step{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;}
+.step-n{width:22px;height:22px;border-radius:50%;background:rgba(168,50,50,.2);color:var(--accent);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.step-t{font-size:14px;color:var(--text2);line-height:1.6;}
+
+/* PROGRESS */
+.prog-item{margin-bottom:12px;}
+.prog-header{display:flex;justify-content:space-between;margin-bottom:5px;}
+.prog-name{font-size:14px;font-weight:600;}
+.prog-status{font-size:12px;color:var(--text2);}
+.prog-track{height:5px;background:var(--surface2);border-radius:100px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:100px;transition:width 1.5s ease;}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat{background:var(--surface2);border-radius:var(--radius-sm);padding:14px;}
+.stat-n{font-size:26px;font-weight:900;}
+.stat-l{font-size:11px;color:var(--text2);margin-top:3px;}
+
+/* AVATAR */
+.av{width:34px;height:34px;border-radius:50%;background:rgba(168,50,50,.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0;}
+.av-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.av-name{font-size:14px;font-weight:500;flex:1;}
+.av-tag{font-size:12px;color:var(--text3);}
+
+/* WAITING DOTS */
+.w-avs{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;margin:18px 0;}
+.w-av{width:40px;height:40px;border-radius:50%;background:var(--surface2);border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text3);}
+.w-av.joined{background:rgba(168,50,50,.18);border-color:var(--accent);color:var(--accent);}
+
+/* LOADING DOTS */
+.dots{display:inline-flex;gap:5px;}
+.dot{width:7px;height:7px;border-radius:50%;animation:dotPulse 1.2s ease infinite;}
+.dot:nth-child(1){background:var(--accent);}
+.dot:nth-child(2){background:var(--pink);animation-delay:.2s;}
+.dot:nth-child(3){background:var(--teal);animation-delay:.4s;}
+@keyframes dotPulse{0%,100%{opacity:.3;transform:scale(.8);}50%{opacity:1;transform:scale(1);}}
+
+/* AI LOADER BAR */
+.ai-load-box{background:var(--surface2);border-radius:var(--radius);padding:22px;text-align:center;margin:14px 0;}
+.ai-bar{height:3px;background:var(--border);border-radius:100px;overflow:hidden;margin:14px 0 7px;}
+.ai-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--pink));border-radius:100px;width:0%;transition:width 2.8s ease;}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:36px 20px;text-align:center;cursor:pointer;transition:.2s;margin:14px 0;}
+.upload-zone:hover{border-color:var(--accent);background:rgba(168,50,50,.05);}
+
+/* VOTE */
+.vote-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;}
+.vote-video{height:130px;background:var(--surface2);display:flex;align-items:center;justify-content:center;}
+.vote-foot{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;}
+
+/* SCORE */
+.score-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.score-lbl{font-size:14px;font-weight:600;min-width:70px;}
+.score-track{flex:1;height:7px;background:var(--surface2);border-radius:100px;overflow:hidden;}
+.score-fill{height:100%;border-radius:100px;transition:width 1.5s ease;}
+.score-pct{font-size:12px;font-weight:700;min-width:34px;text-align:left;}
+
+/* WINNER */
+.winner{text-align:center;padding-top:36px;}
+.trophy{font-size:68px;display:block;margin-bottom:14px;animation:trophyBounce 1s ease infinite alternate;}
+@keyframes trophyBounce{from{transform:scale(1) rotate(-3deg);}to{transform:scale(1.1) rotate(3deg);}}
+
+/* SECTION LABEL */
+.sec-lbl{font-size:10px;color:var(--text3);font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}
+
+/* ROLE GRID */
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px;}
+.role-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 14px;text-align:center;cursor:pointer;transition:.25s;}
+.role-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 12px 32px rgba(168,50,50,.2);}
+.role-icon{font-size:30px;margin-bottom:9px;}
+.role-title{font-size:15px;font-weight:700;margin-bottom:3px;}
+.role-desc{font-size:12px;color:var(--text2);}
+
+/* DIVIDER */
+.div{height:1px;background:var(--border);margin:18px 0;}
+
+/* HIDDEN SECTION */
+.mode-section{display:none;margin-top:12px;}
+.mode-section.show{display:block;}
+
+/* NOTIFICATION */
+.notif{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);border-radius:100px;padding:10px 20px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:.3s;white-space:nowrap;}
+.notif.show{opacity:1;}
+
+/* ERROR */
+.err{font-size:12px;color:var(--red);margin-top:6px;display:none;}
+.err.show{display:block;}
+
+/* CONFIG NOTE */
+.config-box{background:rgba(166,124,39,.08);border:1px solid rgba(166,124,39,.25);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;font-size:13px;line-height:1.7;color:var(--amber);}
+.config-box code{font-family:'Space Mono',monospace;font-size:11px;background:rgba(166,124,39,.15);padding:2px 6px;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+<div class="bg-orb orb3"></div>
+
+<!-- Guernica background -->
+<svg style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.35;" viewBox="0 0 460 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+  <!-- fragmented horse head top right -->
+  <g stroke="#1A1815" stroke-width="1.2" fill="none">
+    <path d="M320 40 L370 20 L390 50 L360 80 L330 70 Z"/>
+    <path d="M360 20 L380 10 L400 30 L375 45"/>
+    <path d="M370 55 L385 48 L395 60 L378 68"/>
+    <!-- nostrils -->
+    <ellipse cx="388" cy="35" rx="5" ry="3" fill="#1A1815" opacity="0.5"/>
+    <!-- eye -->
+    <circle cx="365" cy="38" r="4" stroke="#1A1815" stroke-width="1"/>
+    <circle cx="365" cy="38" r="1.5" fill="#1A1815" opacity="0.6"/>
+    <!-- jagged teeth -->
+    <path d="M350 72 L358 80 L365 72 L372 80 L380 72"/>
+  </g>
+
+  <!-- screaming face fragment left -->
+  <g stroke="#1A1815" stroke-width="1" fill="none" transform="translate(10, 180)">
+    <path d="M20 0 L60 10 L70 50 L40 80 L0 60 Z"/>
+    <path d="M25 15 L45 20 L50 40 L30 55 L10 40 Z"/>
+    <!-- open mouth -->
+    <path d="M15 45 Q30 65 50 45" stroke-width="1.5"/>
+    <path d="M20 45 L50 45"/>
+    <!-- teeth -->
+    <path d="M20 45 L25 52 L30 45 L35 52 L40 45 L45 52 L50 45"/>
+    <!-- eye left -->
+    <ellipse cx="22" cy="25" rx="5" ry="7"/>
+    <circle cx="22" cy="25" r="2" fill="#1A1815" opacity="0.5"/>
+    <!-- torn edge -->
+    <path d="M0 0 L-15 20 L5 35 L-10 60"/>
+  </g>
+
+  <!-- bull silhouette fragment top left -->
+  <g stroke="#1A1815" stroke-width="1.2" fill="none" transform="translate(0, 30)">
+    <path d="M10 80 L50 60 L80 70 L90 100 L60 120 L20 110 Z"/>
+    <!-- horns -->
+    <path d="M50 60 L30 30 L55 50"/>
+    <path d="M70 65 L90 35 L72 58"/>
+    <!-- eye -->
+    <circle cx="55" cy="80" r="5"/>
+    <circle cx="55" cy="80" r="2" fill="#1A1815" opacity="0.5"/>
+    <!-- tail -->
+    <path d="M10 95 Q-10 110 5 130 Q15 150 0 160"/>
+  </g>
+
+  <!-- fragmented hand / fist bottom left -->
+  <g stroke="#1A1815" stroke-width="1" fill="none" transform="translate(5, 680)">
+    <path d="M20 80 L60 60 L80 80 L70 120 L30 130 L10 100 Z"/>
+    <!-- fingers -->
+    <path d="M30 60 L25 20 L35 15 L42 55"/>
+    <path d="M42 58 L40 15 L50 12 L55 55"/>
+    <path d="M55 58 L58 18 L68 20 L65 58"/>
+    <path d="M65 60 L72 25 L80 30 L75 62"/>
+    <!-- thumb -->
+    <path d="M20 80 L-5 65 L0 50 L18 70"/>
+    <!-- knuckle lines -->
+    <path d="M28 55 Q35 50 42 55"/>
+    <path d="M42 55 Q49 50 56 55"/>
+    <path d="M56 55 Q63 50 68 55"/>
+  </g>
+
+  <!-- lamp / eye of god - center top -->
+  <g stroke="#1A1815" stroke-width="1.2" fill="none" transform="translate(180, 20)">
+    <!-- diamond eye shape -->
+    <path d="M50 0 L90 30 L50 60 L10 30 Z"/>
+    <ellipse cx="50" cy="30" rx="15" ry="10"/>
+    <circle cx="50" cy="30" r="5" fill="#1A1815" opacity="0.4"/>
+    <!-- rays -->
+    <path d="M50 0 L50 -20"/>
+    <path d="M90 30 L110 30"/>
+    <path d="M50 60 L50 80"/>
+    <path d="M10 30 L-10 30"/>
+    <path d="M78 8 L92 -5"/>
+    <path d="M78 52 L92 65"/>
+    <path d="M22 8 L8 -5"/>
+    <path d="M22 52 L8 65"/>
+    <!-- hanging cord -->
+    <path d="M50 80 L45 110 L55 130 L48 160"/>
+  </g>
+
+  <!-- broken figure / body fragment right side -->
+  <g stroke="#1A1815" stroke-width="1" fill="none" transform="translate(340, 350)">
+    <path d="M30 0 L70 20 L80 70 L50 100 L10 80 L0 30 Z"/>
+    <!-- rib-like lines -->
+    <path d="M15 40 L65 50"/>
+    <path d="M12 55 L62 65"/>
+    <path d="M15 70 L58 78"/>
+    <!-- arm reaching up -->
+    <path d="M70 20 L90 -20 L100 -30"/>
+    <path d="M95 -35 L105 -25 L98 -15"/>
+  </g>
+
+  <!-- fallen figure bottom right -->
+  <g stroke="#1A1815" stroke-width="1" fill="none" transform="translate(280, 750)">
+    <path d="M0 50 L80 30 L120 60 L100 100 L20 110 Z"/>
+    <!-- head -->
+    <ellipse cx="110" cy="45" rx="18" ry="14"/>
+    <circle cx="115" cy="42" r="4"/>
+    <!-- open mouth screaming -->
+    <path d="M100 52 Q112 65 125 52"/>
+    <path d="M102 52 L124 52"/>
+    <!-- arm raised -->
+    <path d="M80 30 L60 0 L50 -10"/>
+    <!-- broken sword/spear -->
+    <path d="M0 80 L-20 60 L-10 50 L15 75"/>
+    <path d="M-15 55 L-25 45"/>
+  </g>
+
+  <!-- additional fragments -->
+
+  <!-- horse body torso center -->
+  <g stroke="#1A1815" stroke-width="1.1" fill="none" transform="translate(150, 100)">
+    <path d="M0 60 L50 30 L100 50 L110 100 L70 130 L20 120 Z"/>
+    <path d="M50 30 L55 0 L70 5 L65 35"/>
+    <!-- spine line -->
+    <path d="M20 80 L90 70"/>
+    <path d="M15 95 L85 88"/>
+    <!-- leg fragment -->
+    <path d="M20 120 L10 160 L0 180 L15 182 L25 160 L30 125"/>
+    <path d="M70 130 L75 170 L65 190 L80 192 L88 168 L82 132"/>
+  </g>
+
+  <!-- screaming open mouth close-up, top center -->
+  <g stroke="#1A1815" stroke-width="1.3" fill="none" transform="translate(190, 300)">
+    <path d="M0 0 L80 10 L85 60 L45 80 L-5 55 Z"/>
+    <!-- huge open mouth -->
+    <path d="M10 35 Q40 65 75 38"/>
+    <path d="M10 35 L75 38"/>
+    <!-- many teeth -->
+    <path d="M12 35 L15 48 L20 35 L25 48 L30 35 L35 48 L40 35 L45 48 L50 35 L55 48 L60 35 L65 48 L70 35"/>
+    <!-- tongue -->
+    <path d="M30 48 Q40 60 55 50" stroke-width="1.5"/>
+    <!-- eyes wide -->
+    <ellipse cx="18" cy="20" rx="7" ry="9"/>
+    <circle cx="18" cy="20" r="3" fill="#1A1815" opacity="0.5"/>
+    <ellipse cx="62" cy="22" rx="7" ry="9"/>
+    <circle cx="62" cy="22" r="3" fill="#1A1815" opacity="0.5"/>
+  </g>
+
+  <!-- dead bird / dove fragment -->
+  <g stroke="#1A1815" stroke-width="1" fill="none" transform="translate(310, 120)">
+    <path d="M0 40 L40 20 L80 35 L75 65 L35 70 Z"/>
+    <!-- wing broken -->
+    <path d="M40 20 L20 0 L10 15 L35 30"/>
+    <path d="M60 25 L80 5 L90 20 L68 32"/>
+    <!-- beak open -->
+    <path d="M75 48 L95 42 L93 52 Z"/>
+    <!-- eye -->
+    <circle cx="68" cy="45" r="3"/>
+    <!-- feather lines -->
+    <path d="M10 50 L70 40"/>
+    <path d="M8 58 L68 50"/>
+  </g>
+
+  <!-- spear / broken lance diagonal -->
+  <g stroke="#1A1815" stroke-width="1.2" fill="none" transform="translate(20, 250)">
+    <path d="M0 0 L120 180"/>
+    <path d="M115 170 L130 160 L125 185 Z"/>
+    <!-- crack in middle -->
+    <path d="M55 82 L65 88 L58 98"/>
+  </g>
+
+  <!-- figure with arms raised right side -->
+  <g stroke="#1A1815" stroke-width="1" fill="none" transform="translate(390, 180)">
+    <!-- torso -->
+    <path d="M10 50 L50 40 L60 100 L30 120 L0 95 Z"/>
+    <!-- head -->
+    <ellipse cx="30" cy="30" rx="20" ry="22"/>
+    <!-- arms raised in horror -->
+    <path d="M10 60 L-20 20 L-30 10"/>
+    <path d="M50 55 L75 15 L85 5"/>
+    <!-- hands -->
+    <path d="M-30 10 L-40 0 L-35 15 L-25 8"/>
+    <path d="M85 5 L95 -5 L90 10 L80 5"/>
+    <!-- face lines -->
+    <path d="M18 25 L22 38"/>
+    <path d="M38 25 L42 38"/>
+    <path d="M20 42 Q30 50 42 42"/>
+  </g>
+
+  <!-- mother holding child fragment bottom center -->
+  <g stroke="#1A1815" stroke-width="1.1" fill="none" transform="translate(160, 650)">
+    <!-- mother body -->
+    <path d="M20 0 L70 10 L80 80 L50 110 L10 90 L0 20 Z"/>
+    <!-- child head small -->
+    <ellipse cx="65" cy="25" rx="15" ry="13"/>
+    <circle cx="68" cy="22" r="3"/>
+    <!-- child limp arm -->
+    <path d="M75 35 L95 55 L90 65"/>
+    <!-- mother head tilted back -->
+    <ellipse cx="25" cy="-15" rx="18" ry="16" transform="rotate(-20,25,-15)"/>
+    <!-- mouth open screaming -->
+    <path d="M15 -10 Q25 0 38 -8"/>
+    <!-- tears -->
+    <path d="M12 -5 L8 15"/>
+    <path d="M35 -5 L32 15"/>
+  </g>
+
+  <!-- blood red accents -->
+  <g opacity="0.6">
+    <path d="M60 200 L80 240 L55 260 L40 230 Z" fill="#8b0000" stroke="#cc0000" stroke-width="1"/>
+    <path d="M350 400 L365 430 L345 445 L332 418 Z" fill="#8b0000" stroke="#cc0000" stroke-width="1"/>
+    <path d="M200 700 Q215 720 205 740 Q195 720 200 700 Z" fill="#8b0000" stroke="none"/>
+    <path d="M420 300 Q432 318 425 335 Q415 318 420 300 Z" fill="#8b0000" stroke="none"/>
+    <path d="M100 580 L118 610 L95 628 L80 598 Z" fill="#6b0000" stroke="#aa0000" stroke-width="0.8"/>
+  </g>
+
+  <!-- scattered geometric shards -->
+  <g stroke="#1A1815" stroke-width="0.7" fill="none" opacity="0.8">
+    <path d="M420 80 L450 65 L455 90 L425 100 Z"/>
+    <path d="M30 150 L55 138 L60 158 L35 165 Z"/>
+    <path d="M200 550 L225 538 L230 560 L205 568 Z"/>
+    <path d="M320 480 L348 468 L352 492 L325 498 Z"/>
+    <path d="M100 750 L128 738 L133 762 L105 768 Z"/>
+    <path d="M420 700 L448 690 L450 712 L422 718 Z"/>
+    <!-- diagonal cuts -->
+    <path d="M0 350 L40 310"/>
+    <path d="M420 350 L460 320"/>
+    <path d="M180 820 L220 790"/>
+    <path d="M300 130 L340 100"/>
+    <path d="M120 200 L155 175"/>
+    <path d="M350 750 L385 725"/>
+  </g>
+
+  <!-- eye isolated floating center right -->
+  <g stroke="#1A1815" stroke-width="1.2" fill="none" transform="translate(360, 550)">
+    <path d="M0 20 Q25 0 50 20 Q25 40 0 20 Z"/>
+    <circle cx="25" cy="20" r="8"/>
+    <circle cx="25" cy="20" r="3" fill="#1A1815" opacity="0.6"/>
+    <!-- lashes -->
+    <path d="M5 10 L0 2"/>
+    <path d="M15 5 L13 -3"/>
+    <path d="M25 3 L25 -5"/>
+    <path d="M35 5 L37 -3"/>
+    <path d="M45 10 L50 2"/>
+  </g>
+  <g stroke="#1A1815" stroke-width="0.8" fill="none" opacity="0.6">
+    <path d="M200 300 L230 280 L250 310 L220 330 Z"/>
+    <path d="M100 500 L140 490 L145 520 L105 525 Z"/>
+    <path d="M350 200 L380 190 L385 215 L352 220 Z"/>
+    <path d="M50 400 L80 385 L88 410 L55 420 Z"/>
+    <path d="M380 600 L410 588 L415 615 L382 622 Z"/>
+    <!-- diagonal slashes -->
+    <path d="M150 150 L200 120"/>
+    <path d="M250 450 L290 420"/>
+    <path d="M60 600 L100 570"/>
+    <path d="M370 450 L410 430"/>
+  </g>
+
+  <!-- crying woman fragment center-left -->
+  <g stroke="#1A1815" stroke-width="1.1" fill="none" transform="translate(80, 480)">
+    <path d="M30 0 L65 15 L70 60 L40 85 L5 65 L0 20 Z"/>
+    <!-- eyes with tears -->
+    <ellipse cx="20" cy="25" rx="6" ry="8"/>
+    <path d="M17 33 L14 50 L20 48 L18 65"/>
+    <ellipse cx="48" cy="28" rx="6" ry="8"/>
+    <path d="M45 36 L42 52 L48 50 L46 68"/>
+    <!-- open mouth -->
+    <path d="M15 60 Q32 75 58 62"/>
+    <!-- handkerchief / cloth -->
+    <path d="M5 65 L-20 80 L-15 100 L10 90"/>
+    <path d="M-18 82 L-25 95 L-12 98"/>
+  </g>
+</svg>
+<div class="notif" id="notif"></div>
+
+<!-- ══════════════ TOPIC ASPECT MODAL ══════════════ -->
+<div id="aspect-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;padding:24px;">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;width:100%;max-width:400px;">
+    <div class="badge b-purple" style="margin-bottom:12px;">🎯 רגע לפני</div>
+    <h3 id="aspect-modal-title" style="margin-bottom:8px;font-size:16px;">איזה היבט של הנושא תרצה לתרגל?</h3>
+    <p style="margin-bottom:16px;font-size:13px;">ככל שתפרט — האתגר יהיה מדויק יותר</p>
+    <input type="text" id="aspect-input" placeholder="לדוגמה: כלל ה-s בגוף שלישי, שלילה עם don't/doesn't, הבדל בין הרגלים לעובדות" style="margin-bottom:14px;" />
+    <button class="btn btn-primary" onclick="confirmAspect()" style="margin-bottom:8px;">צור אתגר ←</button>
+    <button class="btn btn-outline" onclick="skipAspect()">דלג — תן לפנדורה להחליט</button>
+  </div>
+</div>
+
+<!-- ══ EDIT LIBRARY MODAL ══ -->
+<div id="edit-lib-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;width:100%;max-width:480px;display:flex;flex-direction:column;gap:14px;">
+    <div style="font-size:16px;font-weight:700;color:var(--accent);">✏️ עריכת אתגר</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="field" style="margin:0;">
+        <label>שם</label>
+        <input type="text" id="edit-lib-name" />
+      </div>
+      <div class="field" style="margin:0;">
+        <label>מקצוע</label>
+        <input type="text" id="edit-lib-subject" />
+      </div>
+    </div>
+    <div class="field" style="margin:0;">
+      <label>דגם</label>
+      <select id="edit-lib-model">
+        <option value="physical">פיזי</option>
+        <option value="judicial">שיפוטי</option>
+        <option value="artistic">אמנותי</option>
+        <option value="bodily">גופני</option>
+        <option value="improvisation">אלתור</option>
+        <option value="linguistic">כלל (לשוני)</option>
+      </select>
+    </div>
+    <div class="field" style="margin:0;">
+      <label>כיתות</label>
+      <input type="text" id="edit-lib-grades" placeholder="לדוגמה: יא-יב" />
+    </div>
+    <div class="field" style="margin:0;">
+      <label>הקשר נוסף</label>
+      <input type="text" id="edit-lib-topic" placeholder="נושא, פרק, הקשר..." />
+    </div>
+    <div class="field" style="margin:0;">
+      <label>האתגר</label>
+      <textarea id="edit-lib-challenge" rows="6" style="font-size:13px;line-height:1.6;"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="saveLibraryEdit()" style="flex:1;">שמור ✓</button>
+      <button class="btn btn-outline" onclick="closeEditModal()" style="flex:1;">ביטול</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="shell">
+
+<!-- ══════════════ SETUP ══════════════ -->
+<div class="screen" id="setup">
+  <div style="padding-top:40px;text-align:center;">
+    <div style="font-size:52px;font-weight:900;color:var(--accent);margin-bottom:4px;">פנדורה <span style="color:var(--amber);">⚡</span></div>
+    <p style="margin-bottom:30px;max-width:300px;margin-inline:auto;">נותר דבר אחד — הכנס את מפתח Claude</p>
+  </div>
+  <div class="config-box">
+    <strong>🤖 Claude API Key</strong><br><br>
+    פתח את <strong>console.anthropic.com</strong><br>
+    צור חשבון חינמי → לחץ <strong>API Keys</strong> → <strong>Create Key</strong><br>
+    העתק והכנס כאן
+  </div>
+  <div class="field"><label>Claude API Key</label><input type="text" id="cfg-claudeKey" placeholder="sk-ant-..." /></div>
+  <div class="err" id="cfg-err">אנא הכנס את המפתח</div>
+  <button class="btn btn-primary" onclick="saveClaudeKey()">התחל ⚡</button>
+  <div style="text-align:center;margin-top:14px;">
+    <span style="font-size:12px;color:var(--text3);cursor:pointer;" onclick="go('home')">המשך בלי Claude (ללא יצירת אתגרים)</span>
+  </div>
+</div>
+
+<!-- ══════════════ HOME ══════════════ -->
+<div class="screen active" id="home">
+  <div style="padding-top:80px;text-align:center;">
+    <div style="width:28px;height:2px;background:var(--accent);margin:0 auto 18px;"></div>
+    <div style="font-size:56px;font-weight:900;color:var(--text);margin-bottom:6px;">פנדורה</div>
+    <p style="margin-bottom:48px;max-width:280px;margin-inline:auto;color:var(--teal);font-weight:500;">הרגע שלא חוזרים ממנו</p>
+    <button class="btn btn-primary" onclick="go('teacher-login')" style="max-width:260px;margin:0 auto;font-size:17px;padding:16px;">כניסה למורה ←</button>
+    <div style="margin-top:24px;">
+      <span style="font-size:12px;color:var(--text3);cursor:pointer;" onclick="go('setup')">⚙️ הגדרות</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ TEACHER LOGIN ══════════════ -->
+<div class="screen" id="teacher-login">
+  <div class="topbar"><button class="back" onclick="go('home')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-purple">👩‍🏫 מורה</span>
+  <h2 style="margin-bottom:4px;">כניסה</h2>
+  <p style="margin-bottom:20px;">הכנס את האימייל והסיסמה שלך</p>
+  <div class="field"><label>אימייל</label><input type="email" id="t-email" placeholder="your@email.com" /></div>
+  <div class="field"><label>סיסמה</label><input type="password" id="t-pass" placeholder="סיסמה" /></div>
+  <div class="err" id="login-err"></div>
+  <button class="btn btn-primary" onclick="teacherLogin()" style="margin-bottom:8px;">כניסה ←</button>
+  <button class="btn btn-outline" onclick="go('teacher-register')">הרשמה ראשונה →</button>
+</div>
+
+<!-- ══════════════ TEACHER REGISTER ══════════════ -->
+<div class="screen" id="teacher-register">
+  <div class="topbar"><button class="back" onclick="go('teacher-login')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-purple">👩‍🏫 הרשמה</span>
+  <h2>צור חשבון מורה</h2>
+  <p style="margin-bottom:20px;">פעם אחת בלבד</p>
+  <div class="field"><label>שם מלא</label><input type="text" id="t-name" placeholder="שם פרטי ומשפחה" /></div>
+  <div class="field"><label>בית ספר</label><input type="text" id="t-school" placeholder="שם בית הספר" /></div>
+  <div class="field"><label>אימייל</label><input type="email" id="t-reg-email" placeholder="your@email.com" /></div>
+  <div class="field"><label>סיסמה</label><input type="password" id="t-reg-pass" placeholder="לפחות 6 תווים" /></div>
+  <div class="err" id="reg-err"></div>
+  <button class="btn btn-primary" onclick="teacherRegister()">הרשמה ←</button>
+</div>
+
+<!-- ══════════════ TEACHER PROFILE ══════════════ -->
+<div class="screen" id="teacher-profile">
+  <div class="topbar"><button class="back" onclick="go('teacher-dashboard')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-purple">👩‍🏫 פרופיל מקצועי</span>
+  <h2>ספר לנו עליך</h2>
+  <p style="margin-bottom:20px;">זה יעזור ל-AI לייצר אתגרים מותאמים</p>
+  <div class="field"><label>מקצוע / מקצועות</label><input type="text" id="p-subject" placeholder="לדוגמה: היסטוריה, אזרחות" /></div>
+  <div class="field">
+    <label>כיתות שאתה מלמד</label>
+    <div class="chips">
+      
+      <button class="chip" onclick="toggleChip(this)">א׳-ב׳</button>
+      <button class="chip" onclick="toggleChip(this)">ג׳-ד׳</button>
+      <button class="chip" onclick="toggleChip(this)">ה׳-ו׳</button>
+      <button class="chip" onclick="toggleChip(this)">ז׳-ח׳</button>
+      <button class="chip" onclick="toggleChip(this)">ט׳-י׳</button>
+      <button class="chip on" onclick="toggleChip(this)">י״א-י״ב</button>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="saveProfile()">שמור והמשך ←</button>
+</div>
+
+<!-- ══════════════ TEACHER DASHBOARD ══════════════ -->
+<div class="screen" id="teacher-dashboard">
+  <div class="topbar">
+    <div class="logo-sm">פנדורה ⚡</div>
+    <span style="font-size:13px;color:var(--text2);" id="dash-greeting">שלום 👋</span>
+  </div>
+  <h2 style="margin-bottom:4px;">לוח הבקרה</h2>
+  <p style="margin-bottom:20px;">מה נעשה היום?</p>
+  <div id="claude-status" style="font-size:12px;margin-bottom:14px;padding:8px 12px;border-radius:8px;background:var(--surface2);"></div>
+  <div class="stats-grid">
+    <div class="stat"><div class="stat-n" style="color:var(--accent);" id="dash-sessions">0</div><div class="stat-l">שיעורים</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--pink);" id="dash-students">0</div><div class="stat-l">תלמידים</div></div>
+  </div>
+  <button class="btn btn-primary" onclick="go('teacher-create-room')" style="margin-bottom:8px;">+ צור חדר חדש</button>
+  <button class="btn btn-outline" onclick="openLibrary()" style="margin-bottom:8px;">📚 מאגר אתגרים קהילתי</button>
+  <button class="btn btn-outline" onclick="go('teacher-profile')">עדכן פרופיל</button>
+  <button class="btn btn-outline" onclick="teacherLogout()" style="margin-top:8px;">התנתק</button>
+</div>
+
+<!-- ══════════════ COMMUNITY LIBRARY ══════════════ -->
+<div class="screen" id="teacher-library">
+  <div class="topbar"><button class="back" onclick="go('teacher-dashboard')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-teal">📚 מאגר קהילתי</span>
+  <h2 style="margin-bottom:4px;">אתגרים של מורים</h2>
+  <p style="margin-bottom:14px;">סנן וחפש אתגרים שעבדו</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+    <div class="field" style="margin-bottom:0;">
+      <label>מקצוע</label>
+      <input type="text" id="lib-subject" placeholder="לדוגמה: תנ״ך">
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label>גיל</label>
+      <select id="lib-grade" style="width:100%;background:var(--surface2);color:var(--text1);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius-sm);padding:10px;font-size:14px;">
+        <option value="">כל הגילאים</option>
+        
+        <option>א׳-ב׳</option>
+        <option>ג׳-ד׳</option>
+        <option>ה׳-ו׳</option>
+        <option>ז׳-ח׳</option>
+        <option>ט׳-י׳</option>
+        <option>י״א-י״ב</option>
+      </select>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="loadLibrary()" style="margin-bottom:14px;">🔍 חפש אתגרים</button>
+
+  <!-- הכנסת אתגר ידנית -->
+  <div style="margin-bottom:14px;">
+    <button class="btn btn-outline" onclick="toggleManualAdd()" style="width:100%;">✏️ הכנס אתגר ידנית</button>
+    <div id="manual-add-form" style="display:none;margin-top:10px;background:var(--surface2);border-radius:var(--radius-sm);padding:14px;">
+      <div class="field">
+        <label>שם האתגר</label>
+        <input type="text" id="manual-name" placeholder="✨ שם האתגר">
+      </div>
+      <div class="field">
+        <label>תיאור האתגר</label>
+        <textarea id="manual-challenge" rows="4" placeholder="תיאור האתגר המלא..."></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="field" style="margin-bottom:0;">
+          <label>מקצוע</label>
+          <input type="text" id="manual-subject" placeholder="פיזיקה">
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>גיל</label>
+          <input type="text" id="manual-grades" placeholder="ג-ד">
+        </div>
+      </div>
+      <div class="field">
+        <label>נושא (אופציונלי)</label>
+        <input type="text" id="manual-topic" placeholder="מגנטיות">
+      </div>
+      <div class="field">
+        <label>דגם</label>
+        <select id="manual-model">
+          <option value="physical">פיזי</option>
+          <option value="judicial">שיפוטי</option>
+          <option value="artistic">אמנותי</option>
+          <option value="bodily">גופני</option>
+          <option value="improvisation">אלתור</option>
+          <option value="linguistic">כלל (לשוני)</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="saveManualChallenge()" style="margin-top:8px;width:100%;">שמור למאגר ←</button>
+    </div>
+  </div>
+
+  <div id="library-results">
+    <div style="text-align:center;padding:30px;color:var(--text3);">טוען אתגרים...</div>
+  </div>
+</div>
+
+<!-- ══════════════ TEACHER CREATE ROOM ══════════════ -->
+<div class="screen" id="teacher-create-room">
+  <div class="topbar"><button class="back" onclick="go('teacher-dashboard')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-teal">⚙️ הגדרות שיעור</span>
+  <h2 style="margin-bottom:4px;">צור חדר</h2>
+  <p style="margin-bottom:20px;">בחר איך לייצר את האתגר</p>
+
+  <!-- 3 MODE CARDS → now 3 modes (was 4) -->
+  <div class="mode-grid">
+    <div class="mode-card selected" id="mode-1" onclick="selectMode(1)">
+      <div class="mode-icon">✍️</div>
+      <div class="mode-title">אני כותב אתגר</div>
+      <div class="mode-desc">אתה כותב אתגר מלא — כל הכיתה מקבלת אותו דבר</div>
+    </div>
+    <div class="mode-card" id="mode-3" onclick="selectMode(3)">
+      <div class="mode-icon">🎲</div>
+      <div class="mode-title">הפתע אותי</div>
+      <div class="mode-desc">ה-AI מייצר אתגר לגמרי לבד לפי הנושא והפרופיל שלך</div>
+    </div>
+
+  </div>
+
+  <!-- SHARED FIELDS -->
+  <div class="field"><label>נושא השיעור / הבעיה המרכזית</label><input type="text" id="room-topic" placeholder="לדוגמה: אנטיגונה, כוח הכובד, שם המספר — או בעיה: 'למה אנטיגונה לא בורחת?'" /></div>
+
+  <!-- MODE 1 EXTRA -->
+  <div class="mode-section show" id="ms-1">
+    <div class="field">
+      <label>האתגר שכתבת</label>
+      <textarea id="teacher-challenge" placeholder="כתוב כאן את האתגר המלא. כל הכיתה תקבל בדיוק את הטקסט הזה."></textarea>
+    </div>
+  </div>
+
+  <!-- MODE 3 FACTS — optional context -->
+  <div class="mode-section" id="ms-3">
+    <div class="field" id="facts-field-hidden">
+      <label>הקשר נוסף (אופציונלי)</label>
+      <textarea id="room-facts" placeholder="היבט ספציפי, דמות, אירוע, או רגע שרצית לגעת בו. לדוגמה: הרגע שיוסף מסרב לאשת פוטיפר, או — מלבן שמסתובב בזווית." rows="3"></textarea>
+    </div>
+
+  </div>
+
+  <!-- SHARED SETTINGS -->
+  <div class="field">
+    <label>משך האתגר</label>
+    <div class="chips" id="chips-duration">
+      <button class="chip" onclick="toggleChip(this)">3 דק׳</button>
+      <button class="chip on" id="dur-chip" onclick="toggleChip(this)">5 דק׳</button>
+      <button class="chip" onclick="toggleChip(this)">8 דק׳</button>
+      <button class="chip" onclick="toggleChip(this)">10 דק׳</button>
+      <button class="chip" onclick="toggleChip(this)">ללא הגבלה</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>גודל קבוצות</label>
+    <div class="chips" id="chips-group">
+      <button class="chip" onclick="toggleChip(this)">2</button>
+      <button class="chip" onclick="toggleChip(this)">3</button>
+      <button class="chip on" onclick="toggleChip(this)">4–5</button>
+      <button class="chip" onclick="toggleChip(this)">6–7</button>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="createRoom()">צור חדר ←</button>
+</div>
+
+<!-- ══════════════ TEACHER WAITING ══════════════ -->
+<div class="screen" id="teacher-waiting">
+  <div class="topbar"><button class="back" onclick="go('teacher-create-room')">← חזרה</button><span class="badge b-teal" style="margin:0;">פתוח</span></div>
+  <h2 style="margin-bottom:4px;">כתוב על הלוח</h2>
+  <div class="code-box">
+    <div style="font-size:10px;color:var(--text3);margin-bottom:6px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;">קוד חדר</div>
+    <div class="code-val" id="room-code-display">------</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px;">התלמידים מזינים קוד זה</div>
+  </div>
+  <div class="card">
+    <div class="sec-lbl">קישור לתלמידים</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:10px;">שלח את הקישור הזה לוואטסאפ של הכיתה</div>
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--accent);font-family:'Space Mono',monospace;margin-bottom:10px;word-break:break-all;" id="student-link-display">טוען...</div>
+    <button class="btn btn-teal btn-sm" onclick="shareStudentLink()" style="width:100%;margin-top:0;">שתף קישור 📤</button>
+  </div>
+  <div class="card">
+    <div class="sec-lbl">תלמידים שהצטרפו — <span id="joined-count">0</span></div>
+    <div class="w-avs" id="joined-avatars"></div>
+    <div style="text-align:center;">
+      <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+      <div style="font-size:12px;color:var(--text3);margin-top:7px;">ממתין לתלמידים...</div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="generateAndPreview()" style="margin-bottom:8px;">🤖 צור אתגר חדש</button>
+  <button class="btn btn-outline" onclick="sendLibraryChallenge()" style="margin-bottom:8px;">📚 שלח אתגר מהמאגר</button>
+  <button class="btn btn-outline" onclick="closeRoom()" style="margin-top:8px;">סגור חדר</button>
+</div>
+
+<!-- ══════════════ TEACHER PREVIEW ══════════════ -->
+<div class="screen" id="teacher-preview">
+  <div class="topbar"><button class="back" onclick="go('teacher-waiting')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-amber">🤖 האתגר נוצר</span>
+  <h2 style="margin-bottom:4px;">תצוגה מקדימה</h2>
+  <p style="margin-bottom:14px;">בדוק לפני שאתה שולח לכולם</p>
+
+  <div class="ai-load-box" id="ai-loader">
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div style="font-size:13px;color:var(--text2);margin-top:10px;" id="ai-status">ה-AI מייצר אתגר...</div>
+    <div class="ai-bar"><div class="ai-fill" id="ai-bar-fill"></div></div>
+    <div style="font-size:11px;color:var(--text3);" id="ai-substatus">מייצר לפי הנושא והפרופיל שלך</div>
+  </div>
+
+  <div id="preview-result" style="display:none;">
+<div class="challenge-wrap">
+      <div class="challenge-lbl" id="preview-challenge-name" style="font-size:16px;font-weight:900;color:var(--accent);margin-bottom:8px;"></div>
+      <div id="preview-verification-score" style="font-size:13px;color:var(--text2);margin-bottom:8px;"></div>
+      <div class="challenge-lbl">⚡ האתגר</div>
+      <div class="challenge-txt" id="preview-challenge-txt">...</div>
+    </div>
+    <button class="btn btn-outline" onclick="regenerateChallenge()" style="margin-bottom:8px;">🔄 צור אתגר אחר</button>
+    <button class="btn btn-outline" onclick="shareToLibrary()" style="margin-bottom:8px;border-color:var(--teal);color:var(--teal);">📚 שתף למאגר הקהילתי</button>
+    <div class="field"><label>עריכה ידנית (אופציונלי)</label><textarea id="edit-challenge" rows="3"></textarea></div>
+    <button class="btn btn-primary" onclick="goToValidate()" style="margin-bottom:8px;background:var(--teal);">שלח לאישור ←</button>
+  </div>
+</div>
+
+<!-- ══════════════ TEACHER VALIDATE ══════════════ -->
+<div class="screen" id="teacher-validate">
+  <div class="topbar"><button class="back" onclick="go('teacher-preview')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-amber">✋ רגע לפני</span>
+  <h2 style="margin-bottom:4px;">שלוש שאלות</h2>
+  <p style="margin-bottom:20px;font-size:13px;">חובה לאשר את שלושתן לפני שהאתגר יוצא לכיתה</p>
+
+  <div class="challenge-wrap" style="margin-bottom:18px;padding:14px;">
+    <div class="challenge-lbl">האתגר שייצא</div>
+    <div class="challenge-txt" style="font-size:14px;" id="val-challenge-preview">...</div>
+  </div>
+
+  <div class="card" id="val-q1" onclick="valToggle(1)" style="cursor:pointer;transition:.2s;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <span style="font-size:14px;font-weight:600;line-height:1.5;">אתה יודע בדיוק מה הקבוצה עושה בדקה הראשונה?</span>
+      <span id="val-icon-1" style="font-size:24px;flex-shrink:0;">⬜</span>
+    </div>
+  </div>
+  <div class="card" id="val-q2" onclick="valToggle(2)" style="cursor:pointer;transition:.2s;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <span style="font-size:14px;font-weight:600;line-height:1.5;">קבוצה שלא למדה את הנושא הזה — לא תוכל לפתור את האתגר?</span>
+      <span id="val-icon-2" style="font-size:24px;flex-shrink:0;">⬜</span>
+    </div>
+  </div>
+  <div class="card" id="val-q3" onclick="valToggle(3)" style="cursor:pointer;transition:.2s;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <span style="font-size:14px;font-weight:600;line-height:1.5;">אתה מאמין שתלמיד יצא מהאתגר הזה אחרת מכפי שנכנס?</span>
+      <span id="val-icon-3" style="font-size:24px;flex-shrink:0;">⬜</span>
+    </div>
+  </div>
+
+  <div id="val-warning" style="display:none;background:rgba(194,59,59,.08);border:1px solid rgba(194,59,59,.25);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--red);margin:10px 0;">
+    ❌ יש לאשר את שלוש השאלות לפני השליחה
+  </div>
+
+  <button class="btn btn-teal" id="btn-val-send" onclick="sendChallengeFromValidate()" style="margin-top:4px;">שלח לכיתה ← התחל טיימר</button>
+  <button class="btn btn-outline" onclick="go('teacher-preview')" style="margin-top:8px;">חזרה לעריכה</button>
+</div>
+
+<!-- ══ TEACHER FIELD SCREEN ══ -->
+<div class="screen" id="teacher-field">
+  <div class="topbar"><div class="logo-sm">פנדורה ⚡</div></div>
+  <div class="timer-wrap">
+    <div class="timer-num" id="t-timer">5:00</div>
+    <div class="timer-lbl">זמן נותר</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+    <div class="card" style="margin-bottom:0;">
+      <div class="sec-lbl">🏃 בשטח</div>
+      <div id="groups-field"></div>
+    </div>
+    <div class="card" style="margin-bottom:0;">
+      <div class="sec-lbl">✅ סיימו</div>
+      <div id="groups-done"></div>
+    </div>
+  </div>
+  <button class="btn btn-outline" onclick="assignGroups()" style="margin-bottom:8px;">🔀 ערבב קבוצות מחדש</button>
+  <button class="btn btn-outline" onclick="endSession()">סיים שיעור והצבעה →</button>
+  <button class="btn btn-primary" onclick="announceWinner()" style="margin-top:8px;">🏆 הכרז זוכה</button>
+</div>
+
+<!-- ══════════════ TEACHER RESULTS ══════════════ -->
+<div class="screen" id="teacher-results">
+  <div class="topbar"><div class="logo-sm">פנדורה ⚡</div><button class="back" onclick="go('teacher-dashboard')">דשבורד</button></div>
+  <span class="badge b-teal">✅ סיכום שיעור</span>
+  <h2 style="margin-bottom:18px;">תוצאות</h2>
+  <div class="stats-grid">
+    <div class="stat"><div class="stat-n" style="color:var(--accent);" id="res-participants">—</div><div class="stat-l">השתתפו</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--pink);" id="res-groups">—</div><div class="stat-l">קבוצות</div></div>
+  </div>
+  <div class="card">
+    <div class="sec-lbl">הצבעת הכיתה</div>
+    <div id="results-scores"></div>
+  </div>
+
+  <!-- FEEDBACK LOOP -->
+  <div class="card card-glow" id="feedback-card" style="text-align:center;padding:22px;">
+    <div style="font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--accent-light);margin-bottom:14px;">האתגר הזה...</div>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button onclick="saveFeedback('הצית')" style="flex:1;padding:14px;border-radius:var(--radius-sm);border:2px solid rgba(61,92,74,.3);background:rgba(61,92,74,.08);color:var(--teal);font-size:22px;cursor:pointer;font-family:'Heebo',sans-serif;transition:.2s;" onmouseover="this.style.background='rgba(61,92,74,.18)'" onmouseout="this.style.background='rgba(61,92,74,.08)'">🔥<br><span style="font-size:13px;font-weight:700;display:block;margin-top:6px;">הצית</span></button>
+      <button onclick="saveFeedback('שרף')" style="flex:1;padding:14px;border-radius:var(--radius-sm);border:2px solid rgba(194,59,59,.3);background:rgba(194,59,59,.08);color:var(--red);font-size:22px;cursor:pointer;font-family:'Heebo',sans-serif;transition:.2s;" onmouseover="this.style.background='rgba(194,59,59,.18)'" onmouseout="this.style.background='rgba(194,59,59,.08)'">💀<br><span style="font-size:13px;font-weight:700;display:block;margin-top:6px;">שרף</span></button>
+    </div>
+    <div id="feedback-thanks" style="display:none;font-size:13px;color:var(--text2);margin-top:12px;">תודה — הפידבק עוזר לפנדורה ללמוד 🙏</div>
+  </div>
+
+  <button class="btn btn-primary" onclick="go('teacher-create-room')">+ שיעור חדש</button>
+</div>
+
+<!-- ══════════════ STUDENT JOIN ══════════════ -->
+<div class="screen" id="student-join">
+  <div class="topbar"><button class="back" onclick="go('home')">← חזרה</button><div class="logo-sm">פנדורה ⚡</div></div>
+  <span class="badge b-pink">🎒 תלמיד</span>
+  <h2 style="margin-bottom:4px;">הצטרף לאתגר</h2>
+  <p style="margin-bottom:20px;">קבל את הקוד מהמורה שלך</p>
+  <div class="field"><label>קוד חדר</label><input type="text" class="code-input" id="s-code" placeholder="LION88" maxlength="6" style="text-transform:uppercase;" /></div>
+  <div class="field"><label>שמך הפרטי</label><input type="text" id="s-name" placeholder="שמך" /></div>
+  <div class="err" id="join-err"></div>
+  <button class="btn btn-pink" onclick="studentJoin()">כניסה ←</button>
+</div>
+
+<!-- ══════════════ STUDENT WAITING ══════════════ -->
+<div class="screen" id="student-waiting">
+  <div style="text-align:center;padding-top:20px;">
+    <span class="badge b-amber" id="waiting-badge">⏳ ממתינים</span>
+    <h2 style="margin-bottom:6px;" id="waiting-title">ממתינים לאתגר</h2>
+    <p style="margin-bottom:20px;" id="waiting-subtitle">המורה עומד לשלוח את האתגר לכולם</p>
+    <div class="card" style="text-align:right;margin:18px 0;">
+      <div class="sec-lbl">הקבוצה שלך</div>
+      <div id="s-color-banner" style="display:none;height:8px;border-radius:4px;margin-bottom:16px;transition:.3s;"></div>
+      <div style="font-size:42px;font-weight:900;color:var(--accent);margin-bottom:12px;letter-spacing:-1px;" id="s-group-name">ממתין לשיבוץ...</div>
+      <div id="s-group-members"></div>
+    </div>
+    <div class="dots" id="waiting-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div style="font-size:12px;color:var(--text3);margin-top:8px;" id="waiting-msg">האתגר מוכן בקרוב</div>
+  </div>
+</div>
+
+<!-- ══════════════ STUDENT CHALLENGE ══════════════ -->
+<div class="screen" id="student-challenge">
+  <div class="topbar"><span class="badge b-purple" style="margin:0;" id="s-team-badge">⚡ הקבוצה שלך</span><span class="badge b-live" style="margin:0;">חי 🔴</span></div>
+  <div style="text-align:center;margin:10px 0 4px;">
+    <div style="font-size:11px;color:var(--text3);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px;">הקבוצה שלך</div>
+    <div style="font-size:36px;font-weight:900;letter-spacing:-1px;padding:10px 20px;border-radius:12px;display:inline-block;" id="s-group-display"></div>
+  </div>
+  <div class="timer-wrap" style="margin:8px 0;">
+    <div class="timer-num" id="s-timer">5:00</div>
+    <div class="timer-lbl">זמן נותר</div>
+  </div>
+  <h2 style="margin-bottom:4px;" id="s-challenge-name"></h2>
+  <div class="challenge-wrap">
+    <div class="challenge-lbl">⚡ האתגר שלכם</div>
+    <div class="challenge-txt" id="s-challenge-txt">...</div>
+  </div>
+  <div style="background:rgba(168,50,50,.08);border-radius:var(--radius-sm);padding:10px 14px;margin-top:12px;font-size:13px;color:var(--text2);text-align:center;">
+    📋 קראו יחד בקול רם — ואז התחילו לעבוד
+  </div>
+  <button class="btn btn-pink" onclick="go('student-submit')" style="margin-top:14px;">סיימנו — מוכנים להציג ✓</button>
+</div>
+
+<!-- ══════════════ STUDENT FIELD ══════════════ -->
+<div class="screen" id="student-field">
+  <div class="topbar"><button class="back" onclick="go('student-challenge')">← חזרה</button><span class="badge b-live" style="margin:0;">חי 🔴</span></div>
+  <div class="timer-wrap">
+    <div class="timer-num" id="s-field-timer">5:00</div>
+    <div class="timer-lbl">דקות נותרות</div>
+  </div>
+  <div class="card">
+    <div class="sec-lbl">הקבוצה שלך</div>
+    <div id="s-team-members"></div>
+  </div>
+  <div class="challenge-wrap" style="padding:14px;">
+    <div class="challenge-txt" style="font-size:14px;" id="s-field-challenge">...</div>
+  </div>
+  <button class="btn btn-pink" onclick="go('student-submit')">סיימנו — להגשה ←</button>
+</div>
+
+<!-- ══════════════ STUDENT SUBMIT ══════════════ -->
+<div class="screen" id="student-submit">
+  <div class="topbar"><div class="logo-sm">פנדורה ⚡</div><span class="badge b-live" style="margin:0;">חי 🔴</span></div>
+  <div class="timer-wrap" style="margin:12px 0;">
+    <div class="timer-num urgent" id="s-submit-timer">5:00</div>
+    <div class="timer-lbl">זמן נותר</div>
+  </div>
+  <div class="challenge-wrap" style="padding:14px;margin-bottom:14px;">
+    <div class="challenge-txt" style="font-size:14px;" id="s-submit-challenge">...</div>
+  </div>
+  <div class="card" style="text-align:center;padding:24px;">
+    <div style="font-size:40px;margin-bottom:10px;">🙋</div>
+    <h3 style="margin-bottom:6px;">סיימתם?</h3>
+    <p style="margin-bottom:0;">לחצו כשאתם מוכנים להציג בפני הכיתה</p>
+  </div>
+  <button class="btn btn-pink" onclick="submitProduct()" style="margin-top:14px;">סיימנו — מוכנים להציג ✓</button>
+</div>
+
+<!-- ══════════════ STUDENT FINISH ══════════════ -->
+<div class="screen" id="student-winner">
+  <div class="winner">
+    <span style="font-size:60px;">🎉</span>
+    <h1 style="margin:16px 0 10px;">כל הכבוד!</h1>
+    <p style="color:var(--text2);margin-bottom:26px;">הייתם מדהימים — חזרו לכיתה להצגה!</p>
+    <button class="btn btn-pink" onclick="go('home')">חזרה להתחלה ←</button>
+  </div>
+</div>
+
+</div><!-- end shell -->
+
+<script>
+// PANDORA_BUILD_2026_05_31_V10_FAST
+// ══════════════════════════════════════════
+// CONFIG & STATE
+// ══════════════════════════════════════════
+let db = null;
+// API key managed server-side via ANTHROPIC_API_KEY env var
+let currentRoom = null;
+let currentUser = { type: null, name: '', uid: null };
+let timerInterval = null;
+let timerSecs = 300;
+let selectedMode = 1;
+let libraryItems = [];
+
+
+const GROUP_NAMES = ['סגולים','אדומים','כתומים','טורקיז','תכלת','ירוקים','ורודים','צהובים'];
+const GROUP_COLORS = ['#6C63FF','#FF6B6B','#FFB347','#4ECDC4','#45B7D1','#96CEB4','#DDA0DD','#F7B731'];
+
+// ══════════════════════════════════════════
+// STUDENT LINK
+// ══════════════════════════════════════════
+function updateStudentLink(code) {
+  const link = window.location.origin + window.location.pathname + '?join=' + code;
+  const el = document.getElementById('student-link-display');
+  if (el) el.textContent = link;
+}
+
+function shareStudentLink() {
+  const code = currentRoom?.code;
+  if (!code) return;
+  const link = window.location.origin + window.location.pathname + '?join=' + code;
+  if (navigator.share) {
+    navigator.share({ title: 'פנדורה ⚡', text: 'הצטרפו לאתגר!', url: link });
+  } else {
+    navigator.clipboard.writeText(link);
+    showNotif('✅ הקישור הועתק!');
+  }
+}
+
+// Auto-detect student join link
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const joinCode = params.get('join');
+  if (joinCode) {
+    document.addEventListener('DOMContentLoaded', () => {
+      go('student-join');
+      const el = document.getElementById('s-code');
+      if (el) el.value = joinCode.toUpperCase();
+    });
+    setTimeout(() => {
+      go('student-join');
+      const el = document.getElementById('s-code');
+      if (el) el.value = joinCode.toUpperCase();
+    }, 100);
+  }
+})();
+function go(id) {
+  // חסום תלמידים מגישה למסכי מורה
+  if (currentUser?.type === 'student' && id.startsWith('teacher-')) {
+    console.warn('גישה נחסמה: תלמיד ניסה להגיע למסך מורה:', id);
+    return;
+  }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showNotif(msg, duration = 2500) {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ══════════════════════════════════════════
+// FIREBASE INIT
+// ══════════════════════════════════════════
+function saveClaudeKey() { go('home'); } // key managed server-side
+
+
+// Firebase config - hardcoded
+(function() {
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp({
+        apiKey: "AIzaSyDec9V3wSoBQuTUmy3Sdl72WtRcTXQAQM8",
+        authDomain: "pandora-2f750.firebaseapp.com",
+        databaseURL: "https://pandora-2f750-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "pandora-2f750"
+      });
+    }
+    db = firebase.database();
+  } catch(e) { console.log('Firebase init error:', e); }
+
+})();
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideErr(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('show');
+}
+function toggleChip(el) { el.classList.toggle('on'); }
+function genCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c = '';
+  for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
+  return c;
+}
+function fmt(s) {
+  const m = Math.floor(s / 60), sec = s % 60;
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+function getChips(container) {
+  return Array.from(container.querySelectorAll('.chip.on')).map(c => c.textContent).join(', ');
+}
+
+// ══════════════════════════════════════════
+// TEACHER AUTH
+// ══════════════════════════════════════════
+async function teacherLogin() {
+  hideErr('login-err');
+  const email = document.getElementById('t-email').value.trim();
+  const pass = document.getElementById('t-pass').value;
+  if (!email || !pass) { showErr('login-err', 'מלא אימייל וסיסמה'); return; }
+
+  try {
+    const cred = await firebase.auth().signInWithEmailAndPassword(email, pass);
+    const uid = cred.user.uid;
+
+    // טען פרטי מורה מ-Firebase
+    const snap = await db.ref('teachers/' + uid).get();
+    const teacherData = snap.val() || {};
+    const name = teacherData.name || email.split('@')[0];
+
+    currentUser = { type: 'teacher', uid, name, email,
+      profile: { subject: teacherData.subject || '', grades: teacherData.grades || '' }
+    };
+    if (teacherData.subject) localStorage.setItem('pandora_subject_' + name, teacherData.subject);
+    if (teacherData.grades) localStorage.setItem('pandora_grades_' + name, teacherData.grades);
+    document.getElementById('dash-greeting').textContent = 'שלום, ' + name + ' 👋';
+    document.getElementById('dash-sessions').textContent = localStorage.getItem('pandora_sessions_' + uid) || 0;
+    document.getElementById('dash-students').textContent = localStorage.getItem('pandora_students_' + uid) || 0;
+
+    // API key managed server-side
+
+    const statusEl = document.getElementById('claude-status');
+    if (statusEl) statusEl.innerHTML = '🤖 Claude: <span style="color:var(--teal)">מחובר ✅</span>';
+
+    go('teacher-dashboard');
+  } catch(e) {
+    if (e.code === 'auth/user-not-found') showErr('login-err', 'משתמש לא נמצא — הירשם תחילה');
+    else if (e.code === 'auth/wrong-password') showErr('login-err', 'סיסמה שגויה');
+    else if (e.code === 'auth/invalid-email') showErr('login-err', 'אימייל לא תקין');
+    else showErr('login-err', 'שגיאת כניסה — נסה שוב');
+  }
+}
+
+async function teacherRegister() {
+  hideErr('reg-err');
+  const name = document.getElementById('t-name').value.trim();
+  const school = document.getElementById('t-school').value.trim();
+  const email = document.getElementById('t-reg-email').value.trim();
+  const pass = document.getElementById('t-reg-pass').value;
+  if (!name || !school || !email || !pass) { showErr('reg-err', 'מלא את כל השדות'); return; }
+  if (!db) { currentUser = { type: 'teacher', name, school, uid: 'demo' }; go('teacher-profile'); return; }
+  try {
+    const cred = await firebase.auth().createUserWithEmailAndPassword(email, pass);
+    await db.ref('teachers/' + cred.user.uid).set({ name, school, email, createdAt: Date.now() });
+    currentUser = { type: 'teacher', uid: cred.user.uid, name, school, email };
+    go('teacher-profile');
+  } catch(e) {
+    showErr('reg-err', 'שגיאת הרשמה: ' + e.message);
+  }
+}
+
+
+async function saveProfile() {
+  const subject = document.getElementById('p-subject').value.trim();
+  // subject is optional
+
+  const grades = Array.from(document.querySelectorAll('#teacher-profile .chip.on')).map(c => c.textContent).join(', ');
+
+  const name = currentUser?.name || '';
+  localStorage.setItem('pandora_subject_' + name, subject);
+  localStorage.setItem('pandora_grades_' + name, grades);
+
+  if (!currentUser.profile) currentUser.profile = {};
+  currentUser.profile.subject = subject;
+  currentUser.profile.grades = grades;
+
+  if (db && currentUser.uid && currentUser.uid !== 'demo') {
+    try { await db.ref('teachers/' + currentUser.uid).update({ subject, grades }); } catch(e) {}
+  }
+
+  go('teacher-dashboard');
+  showNotif('✅ הפרופיל נשמר');
+}
+
+function teacherLogout() {
+  if (db) firebase.auth().signOut().catch(() => {});
+  currentUser = { type: null };
+  go('home');
+}
+
+// ══════════════════════════════════════════
+// MODE SELECTION
+// ══════════════════════════════════════════
+function selectMode(n) {
+  selectedMode = n;
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+  const activeCard = document.getElementById('mode-' + n);
+  if (activeCard) activeCard.classList.add('selected');
+  ['ms-1', 'ms-3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+  const active = document.getElementById('ms-' + n);
+  if (active) active.classList.add('show');
+}
+
+// ══════════════════════════════════════════
+// ROOM CREATION
+// ══════════════════════════════════════════
+async function createRoom() {
+  const topic = document.getElementById('room-topic').value.trim();
+  if (!topic) { showNotif('אנא הזן נושא שיעור'); return; }
+
+  const code = genCode();
+  const durationEl = document.getElementById('chips-duration');
+  const groupEl = document.getElementById('chips-group');
+  const durationChips = durationEl ? getChips(durationEl) : '5 דק׳';
+  const groupChips = groupEl ? getChips(groupEl) : '4–5';
+
+  const roomData = {
+    code,
+    topic,
+    mode: selectedMode,
+    teacherChallenge: document.getElementById('teacher-challenge')?.value?.trim() || '',
+    facts: document.getElementById('room-facts')?.value?.trim() || '',
+    duration: durationChips || '5 דק׳',
+    groupSize: groupChips || '4–5',
+    teacherUid: currentUser.uid,
+    status: 'waiting',
+    createdAt: Date.now(),
+    students: {}
+  };
+
+  currentRoom = { code, ...roomData };
+  // איפוס דגלי טעינה לחדר חדש
+  currentRoom._historyLoaded = false;
+  currentRoom._seferiaLoaded = false;
+  currentRoom._wikiLoaded = false;
+
+  if (db) {
+    try { await db.ref('rooms/' + code).set(roomData); } catch(e) {}
+    listenToRoom(code);
+  }
+
+  document.getElementById('room-code-display').textContent = code;
+  updateStudentLink(code);
+  go('teacher-waiting');
+  listenToStudents(code);
+}
+
+function listenToStudents(code) {
+  if (!db) return;
+  db.ref('rooms/' + code + '/students').on('value', snap => {
+    const students = snap.val() || {};
+    const vals = Object.values(students);
+    document.getElementById('joined-count').textContent = vals.length + ' תלמידים';
+    const avs = document.getElementById('joined-avatars');
+    avs.innerHTML = '';
+    vals.slice(0, 20).forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'w-av joined';
+      div.style.cssText = `background:${s.groupColor ? s.groupColor + '33' : 'rgba(168,50,50,.18)'};border-color:${s.groupColor || 'var(--accent)'};color:${s.groupColor || 'var(--accent)'};flex-direction:column;gap:2px;width:auto;min-width:44px;padding:4px 8px;border-radius:8px;font-size:11px;`;
+      div.innerHTML = `<span style="font-weight:700;font-size:13px;">${s.name?.[0] || '?'}</span><span style="font-size:10px;opacity:.8;">${s.group || ''}</span>`;
+      avs.appendChild(div);
+    });
+  });
+}
+
+function listenToRoom(code) {
+  if (!db) return;
+  db.ref('rooms/' + code + '/status').on('value', snap => {
+    const status = snap.val();
+    if (status === 'active' && currentUser.type === 'teacher') {
+      startTeacherTimer();
+      go('teacher-field');
+      listenToGroupProgress(code);
+    }
+  });
+}
+
+function closeRoom() {
+  if (db && currentRoom) db.ref('rooms/' + currentRoom.code).update({ status: 'closed' });
+  go('teacher-dashboard');
+}
+
+// ══════════════════════════════════════════
+// CLAUDE AI CHALLENGE GENERATION
+// ══════════════════════════════════════════
+async function sendLibraryChallenge() {
+  if (!currentRoom?.generatedChallenge) {
+    showNotif('אין אתגר מהמאגר — צור אתגר חדש');
+    return;
+  }
+  go('teacher-preview');
+  document.getElementById('ai-loader').style.display = 'none';
+  document.getElementById('preview-result').style.display = 'block';
+  const nameEl = document.getElementById('preview-challenge-name');
+  if (nameEl) nameEl.textContent = currentRoom.challengeName ? '✨ ' + currentRoom.challengeName : '';
+  document.getElementById('preview-challenge-txt').textContent = currentRoom.generatedChallenge;
+  document.getElementById('edit-challenge').value = currentRoom.generatedChallenge;
+}
+
+
+async function generateAndPreview() {
+  _doGenerateAndPreview();
+}
+
+function confirmAspect() {
+  const aspect = document.getElementById('aspect-input').value.trim();
+  if (aspect) currentRoom.topicAspect = aspect;
+  document.getElementById('aspect-modal').style.display = 'none';
+  _doGenerateAndPreview();
+}
+
+function skipAspect() {
+  document.getElementById('aspect-modal').style.display = 'none';
+  _doGenerateAndPreview();
+}
+
+async function _doGenerateAndPreview() {
+  go('teacher-preview');
+  document.getElementById('ai-loader').style.display = 'block';
+  document.getElementById('preview-result').style.display = 'none';
+  const fill = document.getElementById('ai-bar-fill');
+  fill.style.width = '0%';
+  setTimeout(() => { fill.style.width = '85%'; }, 50);
+
+  const challenge = await callClaude();
+
+  // אם חזר ריק — חזור לממתינים
+  if (!challenge) {
+    go('teacher-waiting');
+    return;
+  }
+
+  fill.style.width = '100%';
+  setTimeout(() => {
+    document.getElementById('ai-loader').style.display = 'none';
+    document.getElementById('preview-result').style.display = 'block';
+    const parsed = parseChallenge(challenge);
+    const nameEl = document.getElementById('preview-challenge-name');
+    if (nameEl) nameEl.textContent = parsed.challengeName ? '✨ ' + parsed.challengeName : '';
+    const scoreEl = document.getElementById('preview-verification-score');
+    if (scoreEl) {
+      const score = currentRoom?._lastVerificationScore;
+      scoreEl.textContent = (score !== null && score !== undefined) ? `אימות: ${score}/5` : '';
+    }
+    document.getElementById('preview-challenge-txt').textContent = parsed.challengeText;
+    document.getElementById('edit-challenge').value = parsed.challengeText;
+    currentRoom.generatedChallenge = parsed.challengeText;
+    currentRoom.challengeName = parsed.challengeName;
+    // שמור היסטוריית אתגרים למניעת חזרות
+    if (!currentRoom.challengeHistory) currentRoom.challengeHistory = [];
+    currentRoom.challengeHistory.push({
+      name: parsed.challengeName,
+      text: parsed.challengeText
+    });
+    // מעקב חפצים — חלץ חפצים מהאתגר שנוצר ושמור ב-_usedProps
+    if (!currentRoom._usedProps) currentRoom._usedProps = [];
+    const ALL_PROPS = ['ביצה','חבל','מטבעות','נייר A4','גומייה','בקבוק מים','קוביות','סרגל','קש','כדור טניס'];
+    ALL_PROPS.forEach(prop => {
+      if (parsed.challengeText.includes(prop) && !currentRoom._usedProps.includes(prop)) {
+        currentRoom._usedProps.push(prop);
+      }
+    });
+  }, 400);
+}
+
+// ⚠️ parseChallenge הוסרה מכאן — מוגדרת בהמשך הקובץ.
+
+// ══════════════════════════════════════════
+// VALIDATION SCREEN
+// ══════════════════════════════════════════
+const valState = { 1: false, 2: false, 3: false };
+
+function goToValidate() {
+  [1,2,3].forEach(n => {
+    valState[n] = false;
+    const icon = document.getElementById('val-icon-' + n);
+    const card = document.getElementById('val-q' + n);
+    if (icon) icon.textContent = '⬜';
+    if (card) card.style.borderColor = 'var(--border)';
+  });
+  const btn = document.getElementById('btn-val-send');
+  if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+  const warn = document.getElementById('val-warning');
+  if (warn) warn.style.display = 'none';
+  const challenge = document.getElementById('edit-challenge')?.value?.trim() || currentRoom?.generatedChallenge || '';
+  const preview = document.getElementById('val-challenge-preview');
+  if (preview) preview.textContent = challenge;
+  go('teacher-validate');
+}
+
+function valToggle(n) {
+  valState[n] = !valState[n];
+  const icon = document.getElementById('val-icon-' + n);
+  const card = document.getElementById('val-q' + n);
+  if (icon) icon.textContent = valState[n] ? '✅' : '⬜';
+  if (card) card.style.borderColor = valState[n] ? 'var(--teal)' : 'var(--border)';
+}
+
+function sendChallengeFromValidate() {
+  const allOk = valState[1] && valState[2] && valState[3];
+  const warn = document.getElementById('val-warning');
+  if (!allOk) {
+    if (warn) warn.style.display = 'block';
+    return;
+  }
+  if (warn) warn.style.display = 'none';
+  sendChallenge();
+}
+
+// ══════════════════════════════════════════
+// FEEDBACK LOOP
+// ══════════════════════════════════════════
+async function saveFeedback(rating) {
+  const card = document.getElementById('feedback-card');
+  const thanks = document.getElementById('feedback-thanks');
+  // הסתר כפתורים, הצג תודה
+  if (card) {
+    const btns = card.querySelectorAll('button');
+    btns.forEach(b => { b.style.opacity = '.3'; b.style.pointerEvents = 'none'; });
+  }
+  if (thanks) thanks.style.display = 'block';
+  if (!db || !currentRoom) return;
+  try {
+    await db.ref('challenge_feedback').push({
+      challengeText: currentRoom.finalChallenge || currentRoom.generatedChallenge || '',
+      challengeName: currentRoom.challengeName || '',
+      topic: currentRoom.topic || '',
+      subject: currentUser?.profile?.subject || '',
+      grades: currentUser?.profile?.grades || '',
+      rating,
+      ratedBy: currentUser?.name || 'אנונימי',
+      ratedAt: Date.now()
+    });
+    // אתגרים שהצליחו — שמור גם ב-approved + עדכן ignitedCount בספרייה
+    if (rating === 'הצית') {
+      await saveApprovedChallenge(currentRoom.finalChallenge || currentRoom.generatedChallenge || '');
+      // עדכן ignitedCount על הרשומה בספרייה אם קיימת
+      const libKey = currentRoom?._libraryKey;
+      if (libKey) {
+        try {
+          await db.ref('library/' + libKey + '/ignitedCount').transaction(count => (count || 0) + 1);
+        } catch(e) {}
+      }
+    }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════
+// ABSTRACT BARRIER
+// ══════════════════════════════════════════
+
+
+// ══════════════════════════════════════════
+// מבנה יחיד: פיזי — dualConditionPredict, נבחר-בסבב-"מבנה-אחד-לדגם" על-
+// בסיס-דוגמה-אמיתית-מהספרייה ("הכדור-שיודע-מתמטיקה": חיזוי-מבוסס-חישוב,
+// מאומת-בביצוע-פיזי-בפועל). כל-מבנה-דורש (1) בנייה-בידיים ו-(2) שילוב-2-
+// עובדות-קשורות לתוך-מנגנון-אחד. challengeName תמיד שם-קצר-ומקורי, לא-
+// חוזר-על-שם-המבנה.
+const PHYSICAL_STRUCTURES = [
+  {
+    id: 'dualConditionPredict',
+    label: 'חיזוי-פיזי-מפתיע',
+    description: 'משימה-פיזית-אחת-פשוטה-ומפתיעה-לכאורה (כמו-"הזיזו-חפץ-בלי-לגעת-בו", "גרמו-ל-2-דברים-שונים-להתנהג-בדיוק-אותו-דבר") — הקבוצה-מחשבת-ומכריזה-פרמטר-מפתח (מהירות/זווית/מרחק/זמן) לפני-הבדיקה. מוצא-כפי-שכתב-מבנה-האתגר, ישירות — לא-שדות+תבנית.',
+    isDirect: true,
+    writingInstructions: `כתוב-אתגר-פיזי-קצר-וזורם (2-3-משפטים-בלבד), בהשראת-הדוגמאות-הבאות-מספריית-אתגרים-אמיתית: "הזיזו-כדור-בלי-לגעת-בו, רק-על-ידי-הזזת-השולחן"; "בנו-2-מטוטלות-שונות-שיתנדנדו-באותו-קצב-בדיוק"; "גרמו-לכדור-לברוח-מקערה-מסתובבת-ולנחות-בכוס-במרחק-מדויק". כלול-במפורש:
+1. **משימה-פיזית-אחת-בלבד**, פשוטה-לתיאור, שנשמעת-פרדוקסלית/בלתי-אפשרית-לכאורה — לא-שילוב-של-כמה-תנאים-שונים.
+2. חומרי-כיתה-פשוטים-הדרושים.
+3. הוראה: לפני-הביצוע, הקבוצה מחשבת-ומכריזה-פרמטר-מפתח-אחד (כמו-מהירות/זווית/מרחק/זמן) — **בלי-לכתוב-בטקסט-האתגר-עצמו-מהו-המספר-הצפוי** (זה-מה-שהקבוצה-חייבת-לחשב-בעצמה).
+4. ביצוע-חד-פעמי-ובדיקה, עם-קריטריון-הצלחה-ברור-ונצפה.
+⚠️ אל-תכתוב-רשימת-שדות-מופרדת. כתוב-פסקה-אחת-זורמת-וטבעית, קצרה-ככל-האפשר.`
+  }
+];
+
+const JUDICIAL_STRUCTURES = [
+  {
+    id: 'interpretiveVerdict',
+    label: 'הכרעה-פרשנית-עם-סיבוך',
+    description: 'מבוסס-ישירות-על-הדפוס-החוזר-ביותר-בספריית-האתגרים-האמיתית (48-דוגמאות-שיפוטיות): הקבוצה-מכריעה-בשאלה-פרשנית-אחת-ברורה (בינארית) על-הטקסט, מביאה-ראיה-טקסטואלית-ספציפית-אחת (פסוק/מילה/פרט) שתומכת-בהכרעתה — **ואז-חייבת-למצוא-ראיה-נוספת-שמסבכת-את-הכרעתה-שלה-עצמה**. ⚠️ קריטי: ה"סיבוך" הוא-מה-שהופך-את-המשימה-לקשה-אמיתית — לא-מספיק-לבחור-צד-ולתפוס-כל-ראיה-חלקית; חובה-להתמודד-גם-עם-מה-שמערער-על-הבחירה-שלך. ⚠️ נטישה-מכוונת-של-ארכיטקטורת-שדות+תבנית: הטקסט-נכתב-**ישירות-ע"י-Claude** כפסקה-טבעית-אחת (בסגנון-הדוגמאות-האמיתיות בספרייה), לא-מורכב-משדות-נפרדים-שקוד-תופר — כי-נמצא-בפועל-שתפירת-שדות-מייצרת-ניסוח-שבור/מקוטע, ואף-דוגמה-אמיתית-בספרייה-לא-בנויה-כך.',
+    isDirect: true,
+    writingInstructions: `כתוב-אתגר-שיפוטי-קצר-וזורם (2-4-משפטים-בלבד, כמו-הדוגמאות-האמיתיות), הכולל-במפורש:
+1. הפניה-לטקסט-הספציפי (פרק/קטע-בודד — לא-טווח-רחב).
+2. שאלה-פרשנית-אחת-ברורה-ובינארית על-הטקסט (למשל "האם X עשה-Y מתוך-מניע-א' או-מניע-ב'?") — השאלה-חייבת-להיות-כזו-שהטקסט-עצמו-אינו-עונה-עליה-במפורש, כדי-שתידרש-פרשנות-אמיתית.
+3. דרישה-מפורשת: הקבוצה-מביאה-ראיה-טקסטואלית-ספציפית-אחת (פסוק/מילה/פרט-עלילתי) שתומכת-בהכרעתה.
+4. דרישת-הסיבוך: הקבוצה-חייבת-**גם** למצוא-ראיה-נוספת-מהטקסט-שמערערת-על-הכרעתה-שלה-עצמה, ולהציג-את-שתיהן.
+⚠️ אל-תכתוב-רשימת-שדות-מופרדת. כתוב-פסקה-אחת-זורמת-וטבעית, ממש-כמו-שמורה-היה-כותב-אותה.`
+  }
+];
+
+const ARTISTIC_STRUCTURES = [
+  {
+    id: 'blindCollabCreation',
+    label: 'יצירה-משותפת-בעיוורון',
+    description: 'הקבוצה מגלמת-בפועל את-גישת-היצירה של-יוצר/אמן (לפי-הנושא-שהוזן), על-בסיס-עובדה-אחת-בלבד — הופכת-אותה-להשראה-ליצירה-פיזית-משותפת-בעיוורון. כתוב-ישירות, כמו-הדגם-השיפוטי.',
+    isDirect: true,
+    writingInstructions: `כתוב-אתגר-אמנותי-קצר-וזורם (2-4-משפטים), הכולל-במפורש:
+1. שם-היוצר/אמן, נגזר-מהנושא-שהוזן (לא-קבוע-מראש) — כתוב-בלי-"ה" בתחילת-הביטוי.
+2. שני-פרטים-אמיתיים-על-**אותו-יוצר** (לא-2-יוצרים-שונים) — 2-היבטים-של-אותה-גישת-יצירה, שיהוו-השראה.
+3. 2-תפקידים-בעיוורון, שמתרגמים-את-הטכניקות-לפעולה-פיזית-קונקרטית: אחד-יוצר-בלי-לראות-קומפוזיציה-שלמה, אחר-מנחה-בקול-בלי-לראות-תוצאה — הקבוצה-עומדת-גב-אל-גב.
+4. תדירות-החלפת-תפקידים (למשל "כל-20-שניות").
+5. רגע-חשיפת-התוצאה-הסופית.
+⚠️ אל-תכתוב-רשימת-שדות-מופרדת. כתוב-פסקה-אחת-זורמת-וטבעית.`
+  }
+];
+
+const BODILY_STRUCTURES = [
+  {
+    id: 'territoryBattle',
+    label: 'קרב-שטח-דו-צדדי',
+    description: 'הקבוצה מתחלקת-לשני-צדדים, בהשראת-עובדה-אחת-בלבד על-תחרות/הישרדות/ברירה. כל-צד-מגדיר-בעצמו-3-יכולות-ו-3-חולשות — זו-בחירה-אסטרטגית-של-הקבוצה-עצמה. כתוב-ישירות, כמו-הדגם-השיפוטי.',
+    isDirect: true,
+    writingInstructions: `כתוב-אתגר-גופני-קצר-וזורם (2-4-משפטים), הכולל-במפורש:
+1. עובדה-אחת-בלבד על-דינמיקת-תחרות/הישרדות (לא-חובה-ביולוגית-דווקא) שמעניקה-השראה-לחלוקה-לשני-צדדים.
+2. הוראה-מפורשת: כל-צד-מגדיר-**בעצמו** 3-יכולות-פיזיות ו-3-חולשות-פיזיות (לא-הטקסט-קובע) — זו-בחירה-אסטרטגית-של-הקבוצה.
+3. שטח-מוגדר-וקונקרטי-בכיתה שעליו-מתחרים.
+4. משך-הקרב-או-מספר-הסבבים.
+5. קריטריון-הצלחה-ברור-ונצפה — איך-נקבע-מי-שרד/ניצח.
+⚠️ אל-תכתוב-רשימת-שדות-מופרדת. כתוב-פסקה-אחת-זורמת-וטבעית.`
+  }
+];
+
+const IMPROVISATION_STRUCTURES = [
+  {
+    id: 'vectorChainToTarget',
+    label: 'פעולה-חד-פעמית-עם-חיזוי',
+    description: 'פעולה-פיזית-אחת-בלבד (דחיפה, שחרור, נשימה-עצורה) — הקבוצה-מכריזה-מראש-תוצאה-מדויקת-ונצפית, ולאחר-הפעולה-החד-פעמית-אסור-לגעת-שוב. בהשראת-דוגמאות-אמיתיות ("הדחיפה-האחרונה", "נקודת-השבירה"). כתוב-ישירות, כמו-הדגם-השיפוטי.',
+    isDirect: true,
+    writingInstructions: `כתוב-אתגר-אלתור-קצר-וזורם (2-3-משפטים-בלבד), בהשראת-הדוגמאות-הבאות: "דחפו-עגלה-פעם-אחת-בלבד, ואז-הכריזו-מראש-מרחק-עצירה-מדויק-בסנטימטרים, בלי-לגעת-בה-שוב"; "3-חברים-עוצרים-נשימה-בו-זמנית-ומנסים-להחזיק-בדיוק-עד-למספר-שניות-שהוכרז-מראש". כלול-במפורש:
+1. **פעולה-פיזית-אחת-בלבד** (דחיפה/שחרור/נשימה-עצורה/זריקה) — אחרי-הביצוע-החד-פעמי, אסור-לגעת-שוב/לתקן.
+2. חומרי-כיתה-פשוטים-הדרושים.
+3. הוראה: לפני-הביצוע, הקבוצה-מכריזה-בקול-תוצאה-מדויקת-ונצפית (מרחק/זמן/מספר) — **בלי-לכתוב-בטקסט-האתגר-עצמו-מהו-המספר-הצפוי**.
+4. ביצוע-חד-פעמי, ובדיקה-מול-ההכרזה, עם-סטיית-דיוק-מותרת-ברורה.
+⚠️ אל-תכתוב-רשימת-שדות-מופרדת. כתוב-פסקה-אחת-זורמת-וטבעית, קצרה-ככל-האפשר.`
+  }
+];
+
+const DISTRIBUTION_STRUCTURES = [
+  {
+    id: 'entropyTowerBattle',
+    label: 'קרב-מגדל-אנטרופיה',
+    description: 'הקבוצה מתחלקת-לבונים (יוצרי-סדר) ולמפריעים (יוצרי-אי-סדר), בהשראת-עובדה-אחת-בלבד. כתוב-ישירות, כמו-הדגם-השיפוטי.',
+    isDirect: true,
+    writingInstructions: `כתוב-אתגר-התפלגות-קצר-וזורם (2-4-משפטים), הכולל-במפורש:
+1. חלוקה-שוויונית-לבונים (עם-חומר-בנייה-פיזי-מוגדר, למשל "קוביות-עץ") ולמפריעים, בהשראת-עובדה-אחת-על-הנושא.
+2. מספר-סבבים שלם-וקבוע-מראש (לא-"עד-שיקרוס").
+3. כללי-ההפרעה-המותרת — **חובה**-איסור-מפורש-על-מגע-ישיר בגוף-הבונים/בשולחן/בחומר-הבנייה — ההפרעה-חייבת-להיות-עקיפה (למשל-רוח, קול, הסחת-דעת).
+4. קריטריון-הצלחה מדיד-ונצפה-בפועל (גובה-שנותר, מרחק, כמות) — לא-תיאור-מעורפל.
+⚠️ אל-תכתוב-רשימת-שדות-מופרדת. כתוב-פסקה-אחת-זורמת-וטבעית.`
+  }
+];
+
+// ⚠️ דגם: "התגלמות" — נותן-ביטוי-פיזי-מוחשי למושגים-מתמטיים-מופשטים
+// (מספרים-מרוכבים, מטריצות, טרנספורמציות) שאין-להם עוגן-פיזי-טבעי כמו-
+// שיש-לתופעות-פיזיקליות-רגילות. נוסף-אחרי-שנמצא שהמבנים-הפיזיים-הרגילים
+// (במיוחד combinedMechanism, שהוסר-מאז) יצרו-שגיאות-מתמטיות-אמיתיות
+// כשנאלצו-להתכופף-לתוכן-שלא-מתאים-להם. מבנה-יחיד (complexNumberChain,
+// נבחר-בסבב-"מבנה-אחד-לדגם" מאוחר-יותר, על-בסיס-דוגמה-אמיתית-שהוצגה) —
+// יעד/תחזית חייבים-להיות לא-מובנים-מאליהם ולדרוש חישוב-אמיתי, לא-לחשוף-
+// את-התשובה-בתוך-השדות-עצמם.
+const EMBODIMENT_STRUCTURES = [
+  {
+    id: 'complexNumberChain',
+    label: 'שרשרת-מספרים-מרוכבים',
+    description: 'הקבוצה מקבלת רשת-מצוירת עם-נקודת-מוצא-ויעד, וערימת-כרטיסים (כל-אחד-נושא-מספר-מרוכב). מזיזה-קטעי-נייר בגודל-ובכיוון-המתאים-לכל-מספר, ובוחרת-סדרת-כרטיסים-מהערימה שמסתדרת-כשרשרת-פיזית-ליעד. כתוב-ישירות, כמו-הדגם-השיפוטי.',
+    isDirect: true,
+    writingInstructions: `כתוב-אתגר-התגלמות-קצר-וזורם (2-4-משפטים), הכולל-במפורש:
+1. רשת-קווים-מצוירת, עם-נקודת-מוצא-ונקודת-יעד (כתוב-בלי-"ה" בתחילת-הביטוי — למשל "נקודה (0,0)"), ובגבולות-רשת-מוגדרים.
+2. ערימת-כרטיסים — **5-8-כרטיסים-שונים** (לא-רק-2), כל-אחד-נושא-מספר-מרוכב-מדויק (למשל "8-כרטיסים: 1+i, 2-i, -1+2i...").
+3. נקודת-היעד-חייבת-לדרוש-שילוב-לא-מובן-מאליו-של-כמה-כרטיסים — בדוק-בעצמך-שיש-רצף-פתרון-אמיתי-לפני-שאתה-כותב, לא-כרטיס-בודד-שמגיע-ישירות.
+4. הוראה: הקבוצה-בוחרת-סדרת-כרטיסים-מהערימה, ומסדרת-קטעי-נייר (הניתנים-לסיבוב-ומיקום) כשרשרת-פיזית-שמגיעה-בדיוק-ליעד.
+5. רמת-הדיוק-הנדרשת (למשל "אפס-פער-נראה-לעין").
+⚠️ אל-תכתוב-רשימת-שדות-מופרדת. כתוב-פסקה-אחת-זורמת-וטבעית.`
+  }
+];
+
+// ⚠️ דגם: "לשוני" — מבנה-יחיד, techniquePersuasion, אחרי-מסע-חיזוק-ארוך
+// (9→4→7→1 מבנים, ראו-סיכום-מלא-בזיכרון) שהגיע-ליציבות-אמיתית. עיקרון-
+// מרכזי: הדקדוק-**עצמו** חייב-לשאת-את-הרגש/האפקט, לא-רק-להיות-כלל-קר-
+// לצידו. דורש גם-ידע-לשוני-אמיתי וגם-אמפתיה/דמיון — לא-שינון.
+const LINGUISTIC_STRUCTURES = [
+  {
+    id: 'techniquePersuasion',
+    label: 'שכנוע-דרך-כלי-לשוני',
+    description: 'הקבוצה כותבת מכתב-קצר שמטרתו-שכנוע, באמצעות-מספר-מינימלי-של-דוגמאות-שונות-של-הכלי-הלשוני-הנלמד. מכריזה-מראש-יעד-מדיד. הכיתה מצביעה-אם-המכתב-הצליח-במטרתו. כתוב-ישירות, כמו-הדגם-השיפוטי.',
+    isDirect: true,
+    writingInstructions: `כתוב-אתגר-לשוני-קצר (2-3-משפטים-בלבד): מכתב-שכנוע, המשלב-לפחות-מספר-קונקרטי-של-דוגמאות (למשל "4") של-כלי-לשוני-ספציפי-עם-ניגוד-אמיתי (X-לעומת-Y, לא-ברירת-מחדל-סתמית-של-השפה) — אם-הנושא-נקב-בשם-ספציפי, שמור-עליו-במדויק. הגדר-מטרת-שכנוע-ונמען, ויעד-הצלחה-מוצהר-באחוזים. הכיתה-מצביעה-בסוף.`
+  }
+];
+// ══════════════════════════════════════════
+// מנגנון יצירת אתגרים — כתיבה מחדש מאפס
+// 8 קריטריונים מוחלטים, 5 דגמים, לופ בלי הגבלת ניסיונות
+// ══════════════════════════════════════════
+
+// ── הגדרת אתגר — 8 קריטריונים, מוזרקת לכל פרומפט ──
+// ── תבניות דגם ──
+// ⚠️ 'linguistic' ו-'embodiment' לא-נכללים כאן בכוונה — הם topic-specific,
+// נגישים רק דרך ניתוב-ייעודי (isLinguistic/isAbstractMath), לא דרך בחירה-
+// אקראית-כללית. ראו isAbstractMath/isLinguistic בהמשך generateChallengeCore.
+const MODEL_ORDER = ['physical', 'judicial', 'artistic', 'bodily', 'improvisation', 'distribution'];
+
+const MODEL_TEMPLATES = {
+  physical: {
+    label: 'פיזי',
+    actor: 'הקבוצה פועלת על עצם או מערכת פיזית',
+    decisionArena: 'התוצאה הפיזית הנראית (עומד/נופל, עובד/לא עובד, מגיע/לא מגיע) — וזו חייבת בעצמה להפעיל תוצאה-פיזית-שנייה (מכה שמזיזה חפץ נוסף, שבירה שמשחררת מנגנון) — לא רק להיבדק ולהיגמר',
+    example: 'ביצת הגג: הקבוצה בונה מגן לביצה שתיפול מגובה מטר. הביצה נופלת. נסדקת או לא — גלוי לכולם.'
+  },
+  judicial: {
+    label: 'שיפוטי',
+    actor: 'הקבוצה מכריעה בין שני צדדים או עמדות מתוך טקסט קונקרטי',
+    decisionArena: 'הכרעה אחת בקול אחד, עם ראיה ספציפית מהטקסט שמוצגת כהוכחה — וההכרעה חייבת להפעיל תוצאה-פיזית-נראית-ונשארת (צעד, סימון, תזוזת חפץ), שבתורה מפעילה משימה/בדיקה שנייה (לא רק מסמנת ניצחון ונגמרת). אחרת זה דיון-על-הטקסט, לא אתגר',
+    example: 'בית הדין של תמר: הקבוצה מכריעה אם יהודה ידע מי האישה שמולו לפני שגזר את דינה, ומציגה את הפסוק שמכריע.'
+  },
+  artistic: {
+    label: 'אמנותי',
+    actor: 'הקבוצה יוצרת ייצוג חזותי או פיסולי או תנועתי',
+    decisionArena: 'הכיתה מצביעה אם הייצוג מעביר את מה שהתבקש, או לא — והתוצאה (מעביר/לא) חייבת לשמש כחומר-גלם לשלב-יצירה-שני, לא רק להישפט-כשלמה-ולהיגמר',
+    example: 'הצבע הנופל: הקבוצה משליכה צבע על דף בתנועה אחת בלי לגעת בו. הכיתה מכריעה אם זה ציור אמיתי, או כתם.'
+  },
+  bodily: {
+    label: 'גופני',
+    actor: 'הגוף של חברי הקבוצה הוא הכלי — תנועה, איזון, תזמון',
+    decisionArena: 'התוצאה הגופנית הנראית מיד — מצליחים לבצע, או לא — וזו חייבת מיד להפעיל משימה-גופנית-שנייה (לא רק להירשם כהצלחה/כישלון ולהיגמר)',
+    example: 'הקבוצה עומדת על רגל אחת ומוסרת חפץ בלי לאבד שיווי משקל. מצליחים למסור, או נופלים.',
+    // ⚠️ בטיחות: "העברת העצמה" (זוג-נושא-אדם מתנגש בזוג-נושא-אדם-אחר) חשף
+    // סיכון-פציעה אמיתי — נשיאת-משקל-מלא-של-אדם-אחר בשילוב-עם-התנגשות. זה
+    // איסור-כתוב-בקוד, לא רק תלוי-בשיקול-דעת-הכותב, כי הסיכון גדול-מדי
+    // מכדי לסמוך על "השתדלות".
+    safetyLimit: 'אסור בהחלט: נשיאת משקל-מלא של אדם אחר (הרכבה על הגב, אחיזה-של-משקל-גוף-שלם), ואסור בהחלט התנגשות-פיזית בין שתי קבוצות-של-אנשים-בתנועה. מגע מותר: איזון הדדי, תמיכה-חלקית-וקלה, מסירת-חפץ-בעדינות, תנועה-מסונכרנת-בלי-התנגשות.'
+  },
+  improvisation: {
+    label: 'אלתור',
+    actor: 'הקבוצה מאלתרת עם חומרים פשוטים למשימה לא-מוכרת',
+    decisionArena: 'הפתרון שהקבוצה הגיעה אליו עומד במשימה בפועל, או לא — ועמידתו-הראשונית חייבת להוביל למבחן-שני שנגזר מהתוצאה (לא רק תוצאה בודדת שנבדקת ונגמרת)',
+    example: 'מים חיים: לרשות הקבוצה כלי ריק. הקבוצה מפיקה כמות מדידה של מים בלי ברז. מציגה כלי עם מים, או כלי ריק.'
+  },
+  distribution: {
+    label: 'התפלגות',
+    actor: 'הקבוצה מבצעת הרבה חזרות קטנות (זריקות, סיבובים, מדידות) — לא פעולה בודדת',
+    decisionArena: 'הדפוס-הכולל שמתגלה אחרי כל החזרות, לא תוצאה של חזרה בודדת אחת — והדפוס הסופי חייב לקבוע פעולה נוספת (לא רק להיספר ולהירשם)',
+    example: 'הקבוצה מכריזה: מתוך 50 הטלות-מטבע, כמה פעמים יופיע רצף של 3 זהות ברציפות. מטילה 50 פעמים, סופרת בזמן-אמת.'
+  },
+  embodiment: {
+    label: 'התגלמות',
+    actor: 'הקבוצה נותנת ביטוי פיזי מוחשי למושג מתמטי-מופשט (מספר מרוכב, מטריצה, טרנספורמציה, פונקציה) שאין לו עוגן פיזי טבעי — בונה, מבצעת, ומודדת בגוף',
+    decisionArena: 'תוצאה מדויקת ולא-מובנת-מאליה שהקבוצה מכריזה-מראש ומחשבת בעצמה — לא ניחוש אינטואיטיבי, לא תשובה שכבר-נתונה באתגר',
+    example: 'שרשרת-וקטורים: הקבוצה מקבלת שני סוגי-צעד (סיבוב+אורך), ובוחרת רצף שמגיע בדיוק מנקודת-מוצא ליעד מסומן במישור.'
+  },
+  linguistic: {
+    label: 'כלל',
+    actor: 'הקבוצה מכריעה בין שתי אפשרויות לשוניות (מילה, צורה, נטייה) ומוכיחה את בחירתה לפי כלל דקדוקי/לשוני מדויק',
+    decisionArena: 'הכרעה אחת בקול אחד, עם נימוק מדויק מהכלל הלשוני (לא תחושה, לא ניחוש) שמוצג כהוכחה',
+    example: 'שלוש או שלושה: הקבוצה מקבלת שתי קבוצות עצמים (3 כיסאות, 3 ילדים) ומכריעה איזו צורת מספר ("שלוש"/"שלושה") מתאימה לכל אחת, ומוכיחה מכלל ההתאם המגדרי — לא מהתחושה הראשונית.'
+  }
+};
+
+// ⚠️ parseChallenge מוצא-ומחלץ שם+טקסט-אתגר מתוך-תגובת-Claude בפורמט
+// "שם: X\nאתגר: Y" — עדיין-בשימוש כשכבת-תאימות עם-קוד-ישן (callClaude
+// עוטף-את-פלט-generateChallengeCore-החדש בפורמט-הזה, וכאן-מפורק-בחזרה).
+function parseChallenge(raw) {
+  // ⚠️ matchAll()+אחרון, לא match() (ראשון): Claude לפעמים כותב-טיוטה-
+  // ראשונה-פגומה, תופס-בעצמו, וכותב-מחדש-גרסה-מתוקנת עם-"שם:"/"אתגר:"
+  // חדשים באותה-תשובה. חייבים-את-הגרסה-**האחרונה**, לא-הטיוטה-שננטשה.
+  const nameMatches = [...(raw || '').matchAll(/שם:\s*\*{0,2}([^*\n]+)\*{0,2}/g)];
+  const nameMatch = nameMatches.length ? nameMatches[nameMatches.length - 1] : null;
+  const textMatches = [...(raw || '').matchAll(/אתגר:\s*([\s\S]+?)(?:\nדורש הכנה:|\nמשבצות:|\nמשתנים_נשלטים:|\nסיכון-כישלון:|\nעקביות:|\nהד-תמטי:|\nהקסם:|\nפעולה-אמיתית:|$)/g)];
+  const textMatch = textMatches.length ? textMatches[textMatches.length - 1] : null;
+  const prepMatches = [...(raw || '').matchAll(/דורש הכנה:\s*([^\n]+)/g)];
+  const prepMatch = prepMatches.length ? prepMatches[prepMatches.length - 1] : null;
+  const formatOk = !!textMatch;
+
+  let challengeName = nameMatch ? nameMatch[1].trim().replace(/\*/g, '').trim() : '';
+  let challengeText = formatOk ? textMatch[1].trim() : (raw || '');
+
+  // ניקויים שנמצאו אמפירית כנדרשים: כוכביות markdown, שאריות בדיקת-איכות שדלפו
+  challengeText = challengeText
+    .replace(/\*\*[^*]+\*\*/g, m => m.replace(/\*\*/g, ''))
+    .replace(/\*/g, '')
+    .replace(/בדיקת הקריטריונים[\s\S]*?(?=\n\n|\n[א-ת]|$)/g, '')
+    .replace(/✓[^\n]*/g, '').replace(/✗[^\n]*/g, '').replace(/סטטוס:\s*(עובר|נכשל)[^\n]*/g, '')
+    .replace(/^\d+\.\s/gm, '')
+    .trim();
+
+  return { challengeName, challengeText, needsPrep: prepMatch ? prepMatch[1].trim() : null, formatOk };
+}
+
+async function _apiCall(prompt) {
+  const res = await fetch('/api/claude', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ system: prompt, userPrompt: 'צור.' })
+  });
+  return (await res.json()).content?.[0]?.text || '';
+}
+
+// ⚠️ ניקוי-שכפול: הרצף "בנה פרומפט → קרא ל-API → לוג עובדה → בדוק → לוג-זמן"
+// חוזר לכל ניסיון. מוצא כאן פעם אחת. מקבל fact כפרמטר קבוע (נמצא פעם-אחת,
+// לפני-כל-הניסיונות, ב-findThreeFacts) — לא מחפש-קסם-מחדש בכל ניסיון.
+function logGenerationOutcome(topic, attempts, success) {
+  try {
+    if (!db) return;
+    db.ref('generationLog').push({
+      topic: String(topic || '').slice(0, 200),
+      success: !!success,
+      attemptCount: attempts.length,
+      attempts: attempts.map(a => ({ model: a.model, anchor: a.anchor, valid: a.valid, issues: (a.issues || []).slice(0, 5) })),
+      ts: Date.now()
+    }).catch(() => {});
+  } catch (e) { /* לא-חוסם את יצירת האתגר בשום מקרה */ }
+}
+
+// ⚠️ חדש, סבב-שישי: היסטוריית-עובדות לפי-נושא, כדי-שבקשות-חוזרות-על-אותו-
+// נושא לא-יקבלו-תמיד-את-אותה-עובדה (המפתח הוא-נושא-מנורמל, אותיות-קטנות,
+// בלי-רווחים-כפולים — כדי-ש"תסיסה" ו"תסיסה " ייחשבו-אותו-דבר). שומרים עד-
+// 10-אחרונות, לא-כל-ההיסטוריה — מונע-גדילה-אינסופית של-הרשומה.
+function normalizeTopicKey(topic) {
+  return String(topic || '').trim().toLowerCase().replace(/\s+/g, '_').slice(0, 100);
+}
+
+async function fetchFactHistory(topic) {
+  if (!db) return [];
+  try {
+    const snap = await db.ref('factHistory/' + normalizeTopicKey(topic)).get();
+    return snap.val() || [];
+  } catch (e) { return []; }
+}
+
+function saveFactToHistory(topic, fact) {
+  if (!db || !fact) return;
+  try {
+    const key = normalizeTopicKey(topic);
+    db.ref('factHistory/' + key).get().then(snap => {
+      const existing = snap.val() || [];
+      const updated = [...existing, fact].slice(-10);
+      db.ref('factHistory/' + key).set(updated).catch(() => {});
+    }).catch(() => {});
+  } catch (e) { /* לא-חוסם */ }
+}
+
+// ── generateChallengeCore: הפונקציה-הראשית ──
+// ⚠️ ניתוב-דגם לפי-סדר-עדיפות (isAbstractMath → isLinguistic → מקצוע-
+// נרטיבי-מפורש → isAbstract → isScientific → isNarrative → MODEL_ORDER-
+// כללי), ואז-לכל-דגם: בחירת-מבנה (עדיפות-מילת-מפתח + ערבוב + נסיגה-
+// אוטומטית-בין-מבנים) → 2-קריאות-Claude-נפרדות (חיפוש-2-עובדות, ואז-
+// חילוץ-שדות-מהן) → הרכבת-הטקסט-הסופי-מהתבנית. ראו areas/pandora.md
+// לתיעוד-מלא של-האבולוציה-הארכיטקטונית וההחלטות-שהובילו-למצב-הנוכחי.
+
+async function generateChallengeCore(topic, subject, onProgress, aspect) {
+  const _t0 = performance.now();
+
+  // ⚠️ subject (מקצוע) מתחבר לנושא, לא מועבר בנפרד — מונע בלבול מילולי כשמילת
+  // הנושא משמשת ביותר מתחום אחד (כמו "גזרה" = חוק-תנ"כי או תבנית-נטייה-לשונית,
+  // "כפול" = מתמטי או לשוני). בלי זה, subject התקבל כפרמטר אך לא היה בשימוש בכלל.
+  const topicWithSubject = subject ? `${topic} (במקצוע: ${subject})` : topic;
+
+  // ⚠️ הדגם נבחר **ראשון**, לפני-חיפוש-העובדה — כי-חיפוש-העובדה עצמו
+  // תלוי-בדגם/מבנה-שנבחר (מה-סוג-העובדות-שצריך-לחפש).
+  const isAbstractMath = looksAbstractMath(topicWithSubject);
+  const isLinguistic = looksLinguistic(topicWithSubject);
+  const isAbstract = looksAbstract(topicWithSubject);
+  const isScientific = looksScientific(topicWithSubject);
+  const isNarrative = looksNarrative(topicWithSubject);
+  let modelPool = MODEL_ORDER;
+  // ⚠️ isAbstractMath נבדק **ראשון**, לפני-isAbstract — כי-הוא-הכי-ספציפי
+  // (אלגברה/גיאומטריה-מופשטת, לא-הסתברות/סטטיסטיקה). embodiment לא-נכלל
+  // ב-MODEL_ORDER (לא-מתאים-לרוב-הנושאים) — נגיש-רק-דרך-הניתוב-הזה.
+  // ⚠️ ניתוב-ישיר (בלי-physical-כגיבוי), לפי-בקשה-מפורשת: אחרי-שתוכננו-
+  // מחדש 3-מבני-embodiment (חיפוש-על-מפה, גילוי-תכונה-קבועה, גילוי-כלל-
+  // נסתר) ורשימת-מילות-המפתח-צומצמה-ל-7-נושאים-שבאמת-מתאימים-להם — אין-
+  // עוד-צורך-בגיבוי-לפיזי, שרק-היה-מייצר-תוצאות-שגויות-מתמטית (כמו-מנוף-
+  // מסתובב-על-מספרים-מרוכבים) כשהנושא-לא-התאים-לו-מלכתחילה.
+  // ⚠️ isLinguistic נבדק-**לפני**-isNarrative בכוונה: "לשון" כבר-קיים
+  // ב-narrativeSubjects (למטה), כך-שבלי-הבדיקה-הזו-פה-קודם, כל-נושא עם
+  // מקצוע="לשון" היה-נבלע-אוטומטית ל-[שיפוטי,אמנותי,גופני] הכלליים, בלי
+  // הזדמנות-להגיע-לדגם-הלשוני-הייעודי-והמדויק-יותר. embodiment גם-כאן
+  // לא-נכלל-ב-MODEL_ORDER — נגיש-רק-דרך-הניתוב-הזה.
+  // ⚠️ בדיקה-חדשה: מקצוע-נרטיבי-מפורש (תנ"ך/היסטוריה/ספרות) חייבת-לנצח
+  // מילת-מפתח-כללית-ודו-משמעית של-isScientific, שנבדק-אחריה. נמצא-בפועל:
+  // "חוקי-מלחמה" (מקצוע=תנ"ך) נתפס-על-ידי-המילה-"חוק" ב-isScientific
+  // (מיועדת-ל"חוק-הכבידה", לא-"חוקי-מלחמה" במובן-משפטי/מקראי) — ונותב-
+  // בטעות-לפיזי, שכשל-על-כל-5-מבניו, לפני-שהמקצוע-תנ"ך-בכלל-נבדק. תיקון:
+  // אם-המקצוע-עצמו (לא-רק-תוכן-הנושא) הוא-אחד-מ-3-המקצועות-הנרטיביים
+  // (תנ"ך/היסטוריה/ספרות — לא-לשון, שכבר-מטופל-בנפרד-למעלה) — ניצחון-
+  // מוחלט-על-פני-isScientific/isAbstract, כי-בחירת-מקצוע-מפורשת-על-ידי-
+  // המורה היא-אות-חזק-ומכוון-הרבה-יותר-ממילת-מפתח-אחת-דו-משמעית-בתוכן.
+  const explicitNarrativeSubjects = ['תנ"ך', 'היסטוריה', 'ספרות'];
+  const hasExplicitNarrativeSubject = subject && explicitNarrativeSubjects.some(s => subject.includes(s));
+  // ⚠️ נמצא-בפועל: "ואן-גוך" (מקצוע-אמנות) נחת-באקראי-על-התפלגות
+  // (entropyTowerBattle) — תוכן-שכמעט-לא-קשור-לואן-גוך-עצמו. ל"אמנותי"
+  // (blindCollabCreation, בנוי-במיוחד-ליוצר/אמן) לא-היה-שום-נתיב-ניתוב-
+  // ייעודי — נגיש-רק-דרך-המאגר-הכללי-האקראי. תיקון: מקצוע="אמנות"
+  // מנותב-ישירות-לאמנותי-בלבד, באותו-דפוס-בדיוק-כמו-נרטיב-מקראי→שיפוטי.
+  const artSubjects = ['אמנות', 'ציור', 'פיסול', 'צילום', 'עיצוב', 'מוזיקה'];
+  const hasArtSubject = subject && artSubjects.some(s => subject.includes(s));
+
+  if (isAbstractMath) modelPool = ['embodiment'];
+  else if (isLinguistic) modelPool = ['linguistic'];
+  else if (hasArtSubject) modelPool = ['artistic'];
+  // ⚠️ תיקון: נושאים-עם-מקצוע-נרטיבי-מפורש (תנ"ך/היסטוריה/ספרות) מנותבים-
+  // עכשיו-ישירות-לשיפוטי-בלבד, לא-לבחירה-אקראית-בין-3-דגמים. נמצא-בפועל:
+  // tallyVerdict (שיפוטי) נבנה-במיוחד-לתוכן-הזה (סיווג-פעולות-דמויות-
+  // בסיפור-עשיר) — עבד-היטב. blindCollabCreation (אמנותי) מניח-יוצר/אמן
+  // עם-"טכניקה" — הפיק-תוצאות-מאולצות-וברורות-פחות על-דמויות-נרטיביות
+  // (משה, קורח) שאינן-"יוצרים". במקום-להרחיב-כל-מבנה-להתאים-לכל-סוג-
+  // תוכן — התמקדות-במבנה-אחד-שכן-מתאים, לפי-בקשה-מפורשת: לחזק-קודם
+  // מבנים-קיימים, לא-להרחיב-לכל-כיוון. territoryBattle (גופני) נשאר-
+  // בצד — נראה-סביר-על-נרטיב-קונפליקטואלי, אך-לא-נבדק-מספיק-עדיין.
+  else if (hasExplicitNarrativeSubject) modelPool = ['judicial'];
+  else if (isAbstract) modelPool = ['distribution', 'physical'];
+  else if (isScientific) modelPool = ['physical', 'improvisation'];
+  else if (isNarrative) modelPool = MODEL_ORDER.filter(m => !['physical', 'distribution', 'improvisation'].includes(m));
+
+  // ⚠️ נסיגה-בין-דגמים, ל-isAbstract בלבד: distribution תמיד-ראשון (נבנה-
+  // בדיוק-בשביל-11-מילות-המפתח-הסטטיסטיות), physical נכנס-רק-כרשת-ביטחון-
+  // שנייה-מלאה, אחרי-שכל-6-מבני-distribution כבר-נכשלו-כולם. לכל-שאר-
+  // המקרים (isScientific/isNarrative/וכו) — נשמרת-ההתנהגות-הקודמת: בחירה-
+  // אקראית-**חד-פעמית** מתוך-modelPool, בלי-נסיגה-בין-דגמים (רק-בין-
+  // מבנים-בתוך-אותו-דגם, כבר-קיים-למטה).
+  const modelsToTry = isAbstract ? modelPool : [modelPool[Math.floor(Math.random() * modelPool.length)]];
+
+  for (const model of modelsToTry) {
+  if (onProgress) onProgress(`דגם נבחר: ${MODEL_TEMPLATES[model].label}`);
+
+  const structuresByModel = {
+    physical: PHYSICAL_STRUCTURES, judicial: JUDICIAL_STRUCTURES, artistic: ARTISTIC_STRUCTURES,
+    bodily: BODILY_STRUCTURES, improvisation: IMPROVISATION_STRUCTURES, distribution: DISTRIBUTION_STRUCTURES, embodiment: EMBODIMENT_STRUCTURES, linguistic: LINGUISTIC_STRUCTURES
+  };
+  const structures = structuresByModel[model] || PHYSICAL_STRUCTURES;
+
+  // ⚠️ כל-8-הדגמים-מכילים-**מבנה-אחד-בלבד** (לאחר-מעבר-מכוון-מ"הרבה-מבנים-
+  // לא-מספיק-מבוחנים" ל"מבנה-אחד-מחוזק-היטב-לכל-דגם"). הלולאה-על-
+  // shuffledStructures נשארת-לתמיכה-עתידית (אם-יתווספו-עוד-מבנים-לדגם) —
+  // כרגע-רצה-פעם-אחת-בדיוק.
+  const shuffledStructures = structures;
+
+  // ⚠️ 2-ניסיונות-למבנה: הזדמנות-שנייה-נגד-מזל-רע-אקראי, בלי-לבזבז-
+  // קריאות-מיותרות. עכשיו-עם-נסיגה-מונחית (previousFailureReason) —
+  // ניסיון-2 מקבל-משוב-מדויק-על-מה-שנכשל-בניסיון-1.
+  for (const chosenStructure of shuffledStructures) {
+    console.log(`[pandora][timing] מבנה-נבחר (קוד, ${model}): ${chosenStructure.id}`);
+    if (onProgress) onProgress(`מנסה-גישה: ${chosenStructure.label}...`);
+
+    let previousFailureReason = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      if (chosenStructure.isDirect) {
+        const result = await writeDirectChallenge(topicWithSubject, aspect, model, chosenStructure, previousFailureReason);
+        if (result.noMatch) {
+          console.warn(`[pandora] כתיבה-ישירה (ניסיון ${attempt}, ${model}, ${chosenStructure.id}): לא-הצליח-לבנות-אתגר-תקין`);
+          previousFailureReason = result.reason || null;
+          if (attempt === 2) break;
+          continue;
+        }
+        console.log(`[pandora][timing] אתגר-נכתב-ישירות (ניסיון ${attempt}, ${model}, ${chosenStructure.id})`);
+        if (currentRoom) currentRoom._challengeModel = model;
+        logGenerationOutcome(topicWithSubject, [{ model, valid: true, issues: [] }], true);
+        console.log(`[pandora][timing] סה"כ זמן-קיר: ${(performance.now() - _t0).toFixed(0)}ms, ${attempt} ניסיונות (כתיבה-ישירה)`);
+        return { challengeName: result.challengeName, challengeText: result.challengeText, needsPrep: null, formatOk: true, verificationScore: null };
+      }
+      const result = model === 'linguistic'
+        ? await findFieldsDirectlyForLinguistic(topicWithSubject, aspect, chosenStructure, previousFailureReason)
+        : await findFactsAndFieldsInOneCall(topicWithSubject, aspect, model, chosenStructure, previousFailureReason);
+      if (result.noMatch) {
+        const failMsg = model === 'linguistic'
+          ? `[pandora] בניית-שדות-ישירה (ניסיון ${attempt}, ${model}, ${chosenStructure.id}): לא-הצליח-לבנות-שדות-תקינים`
+          : `[pandora] חיפוש-ממוקד (ניסיון ${attempt}, ${model}, ${chosenStructure.id}): לא-נמצא-זוג-מתאים`;
+        console.warn(failMsg);
+        previousFailureReason = result.reason || null;
+        if (attempt === 2) break;
+        continue;
+      }
+      const successMsg = model === 'linguistic'
+        ? `[pandora][timing] שדות-נבנו-ישירות (ניסיון ${attempt}, ${model}, ${chosenStructure.id})`
+        : `[pandora][timing] זוג-ממוקד (ניסיון ${attempt}, ${model}, ${chosenStructure.id})`;
+      console.log(successMsg);
+
+      let challengeText = assembleFromStructure(chosenStructure, result.fields, false);
+      let lines = 6;
+      try { lines = measureRenderedLines(challengeText, 320); } catch (e) { lines = 5; }
+      if (lines > 5) challengeText = assembleFromStructure(chosenStructure, result.fields, true);
+
+      saveFactToHistory(topicWithSubject, result.fact1);
+      saveFactToHistory(topicWithSubject, result.fact2);
+      if (currentRoom) currentRoom._challengeModel = model;
+      logGenerationOutcome(topicWithSubject, [{ model, valid: true, issues: [] }], true);
+      console.log(`[pandora][timing] סה"כ זמן-קיר: ${(performance.now() - _t0).toFixed(0)}ms, ${attempt} ניסיונות (חיפוש-ממוקד)`);
+      return { challengeName: result.fields.challengeName || chosenStructure.label, challengeText, needsPrep: null, formatOk: true, verificationScore: null };
+    }
+  }
+
+  // ⚠️ כל-המבנים-בדגם-הזה נוסו-ונכשלו — אם-יש-עוד-דגם-בתור (modelsToTry),
+  // ננסה-אותו-במקום-לוותר-מיד (רלוונטי-בעיקר-ל-isAbstract: distribution
+  // נכשל-לגמרי → physical כרשת-ביטחון-שנייה). אחרת ממשיכים-ללולאה-הבאה
+  // (שלא-קיימת, אז-בפועל-יוצאים-מהלולאה-ונופלים-לכישלון-הסופי-למטה).
+  console.warn(`[pandora] כל-${shuffledStructures.length}-המבנים-בדגם-${model} נכשלו עבור "${topicWithSubject}"`);
+  logGenerationOutcome(topicWithSubject, [{ model, valid: false, issues: ['no-matching-facts-for-any-structure'] }], false);
+  }
+
+  // ⚠️ כל-הדגמים-ב-modelsToTry (דגם-אחד-רגיל, או-distribution+physical
+  // ל-isAbstract) נוסו-ונכשלו-לגמרי — כישלון-אמיתי-סופי.
+  const triedModelsLabel = modelsToTry.map(m => MODEL_TEMPLATES[m].label).join('/');
+  return { challengeName: 'נדרש ניסוח נוסף', challengeText: `לא נמצא זוג-עובדות שמתאים לאף-אחד-מהמבנים בדגם/י ${triedModelsLabel}, עבור "${topicWithSubject}". נסה לנסח את הנושא אחרת.`, needsPrep: null, formatOk: true };
+}
+
+// ⚠️ סבב-שלוש-עשרה: תמיכה-במערך-תבניות, לא-רק-תבנית-בודדת — לחלק-מ-30-
+// המבנים נוספה-וריאציית-ניסוח, מבוססת-על-אתגר-אמיתי-מהספרייה-הקהילתית
+// (זוהה-כתואם-מבנית ל-5-שדותיו-בדיוק). קוד בוחר-אקראית-ביניהן, בכל-הרכבה
+// — Claude לא-נוגע-בזה, עדיין-רק-מחלץ-שדות. מבנים-בלי-וריאציה-נוספת
+// ממשיכים-עם-תבנית-בודדת, כרגיל.
+function assembleFromStructure(structure, fields, useShort) {
+  const key = useShort ? 'shortTemplate' : 'template';
+  const arrKey = useShort ? 'shortTemplates' : 'templates';
+  if (Array.isArray(structure[arrKey]) && structure[arrKey].length) {
+    const fn = structure[arrKey][Math.floor(Math.random() * structure[arrKey].length)];
+    return fn(fields);
+  }
+  return structure[key](fields);
+}
+
+// ⚠️ מדידת-שורות-בפועל, לא-ניחוש. יוצרת אלמנט-נסתר-זמני, עם-אותו-רוחב/גופן
+// שהאתגר-הסופי-מוצג-בו (משוער — 320px, כמו-כרטיס-טיפוסי), ובודקת כמה-שורות
+// הטקסט תופס בפועל, על-פי scrollHeight חלקי line-height. דטרמיניסטי, לא-
+// תלוי-בהצהרת-Claude על-אורך.
+function measureRenderedLines(text, widthPx) {
+  const el = document.createElement('div');
+  el.style.position = 'absolute';
+  el.style.visibility = 'hidden';
+  el.style.width = (widthPx || 320) + 'px';
+  el.style.fontSize = '15px';
+  el.style.lineHeight = '1.5';
+  el.style.whiteSpace = 'normal';
+  el.textContent = text;
+  document.body.appendChild(el);
+  const lineHeightPx = parseFloat(getComputedStyle(el).lineHeight);
+  const lines = Math.round(el.scrollHeight / lineHeightPx);
+  document.body.removeChild(el);
+  return lines;
+}
+
+function pickRandomStructure(structures) {
+  return structures[Math.floor(Math.random() * structures.length)];
+}
+
+// ⚠️ נתיב-נפרד-לגמרי לדגם-הלשוני: techniquePersuasion's fields (technique,
+// goalType, persuasionContext) כולם-מומצאים-על-ידי-Claude — אף-אחד-לא-
+// נגזר-מ"עובדה-שנמצאה-בחיפוש". הנתיב-המשותף (findFactsAndFieldsInOneCall)
+// דורש-בכל-זאת-חיפוש-2-עובדות לפני-חילוץ-שדות — שלב-שאין-לו-שום השפעה-
+// על-הפלט-הסופי-כאן. כאן: Claude בונה-ישירות-את-כל-השדות לפי-הנושא, בלי-
+// עובדות-ביניים — ורק-**התוצאה-המורכבת** נבדקת.
+async function findFieldsDirectlyForLinguistic(topic, aspect, structure, previousFailureReason = null) {
+  const topicLine = aspect
+    ? `נושא: "${topic}", הקשר-ספציפי: "${aspect}"\n⚠️ קריטי: ה-technique חייב-לעסוק-**במדויק** במונח-הדקדוקי-שהתבקש-כאן ("${topic}") — לא-במונח-אחר-ולו-קרוב/מוכר-יותר. אם-"${topic}" קצר-או-כללי-לכאורה, זה-לא-מתיר-לסטות-למונח-שונה — מצא-את-הזווית-הספציפית-בתוכו-עצמו (למשל, אם-התבקש-"נושא" — מדובר-בנושא-הדקדוקי-של-המשפט, לא-בנושא-כללי-של-שיחה, ולא-במונח-לא-קשור-כמו-בניין).`
+    : `נושא: "${topic}"\n⚠️ קריטי: ה-technique חייב-לעסוק-**במדויק** במונח-הדקדוקי-שהתבקש-כאן ("${topic}") — לא-במונח-אחר-ולו-קרוב/מוכר-יותר. אם-"${topic}" קצר-או-כללי-לכאורה, זה-לא-מתיר-לסטות-למונח-שונה — מצא-את-הזווית-הספציפית-בתוכו-עצמו (למשל, אם-התבקש-"נושא" — מדובר-בנושא-הדקדוקי-של-המשפט, לא-בנושא-כללי-של-שיחה, ולא-במונח-לא-קשור-כמו-בניין).`;
+  // ⚠️ עדיפות-3: נסיגה-מונחית — מוגדר-מוקדם-בפונקציה, לפני-השימוש-בהמשך.
+  const failureFeedbackLine = previousFailureReason
+    ? `\n\n⚠️ הניסיון-הקודם-נכשל, מהסיבה-הבאה: "${previousFailureReason}" — תקן-את-זה-במפורש-בניסיון-הזה, אל-תחזור-על-אותה-טעות.`
+    : '';
+  const fieldsLine = `${structure.fields.join(', ')}`;
+  const hintsLines = Object.entries(structure.fieldHints)
+    .map(([field, hint]) => `${field}: ${hint}`)
+    .join('\n');
+
+  // ⚠️ תיקון-1: רנדומיזציה-כפולה-ברמת-קוד למניעת-חזרתיות ב-goalType/
+  // persuasionContext — נמצא-בפועל שהנחיית-טקסט ("בחר-אקראית") לא-עבדה:
+  // 3-אתגרים-רצופים-על-"בניין-הפעיל" הפיקו-בדיוק-אותה-מטרה ("אישור-מסיבת-
+  // סיום-שנה"/"מנהל-בית-הספר"). כאן: הקוד-עצמו מגריל קטגוריה+דוגמה-
+  // ספציפית-בתוכה, ומעביר-אותה-כהשראה-מחייבת — Claude לא-בוחר-בממד-הזה.
+  const scenarioCategories = {
+    'היסטורי': [
+      'לשכנע-מלך לחון-את-האהובה-שנידונה-למוות',
+      'לשכנע-גנרל לא-להוציא-להורג-מרגל-שהתגלה-כאחיו',
+      'לשכנע-קיסר לחון-אסיר',
+      'לשכנע-מפקד-צבא לדחות-מתקפה'
+    ],
+    'מקצועי-בוגר': [
+      'לשכנע-משקיע לממן-מיזם',
+      'לשכנע-שופט לדחות-דיון',
+      'לשכנע-מעסיק להעלות-שכר',
+      'לשכנע-לקוח לחתום-חוזה'
+    ],
+    'דרמטי-דחוף': [
+      'לשכנע-חטפן לשחרר-בני-ערובה',
+      'לשכנע-חבר לא-לקפוץ-מהגג',
+      'לשכנע-טייס-של-מטוס-חטוף לא-לקחת-את-הנוסעים-איתו',
+      'לשכנע-רופא-תורן לבצע-ניתוח-דחוף'
+    ],
+    'רגשי-אישי': [
+      'לשכנע-הורה לא-להתגרש',
+      'לשכנע-אהוב/ה שעוזב/ת לחזור',
+      'לשכנע-חבר-הכי-טוב לא-לעזוב-את-הארץ-לתמיד',
+      'לשכנע-סבא/סבתא לעבור-לגור-קרוב-יותר'
+    ],
+    'דמיוני-אבסורדי': [
+      'לשכנע-חייזר לא-לפלוש-לכדור-הארץ',
+      'לשכנע-רוח-רפאים לעזוב-את-הבית',
+      'לשכנע-בינה-מלאכותית לא-להשתלט-על-העולם',
+      'לשכנע-דרקון לא-לשרוף-את-הכפר'
+    ],
+    'בית-ספרי': [
+      'הארכת-הפסקה-ב-10-דקות',
+      'אישור-מסיבת-סיום-שנה',
+      'שינוי-מיקום-טיול-שנתי',
+      'ביטול-מבחן-מפתיע'
+    ]
+  };
+  const categoryNames = Object.keys(scenarioCategories);
+  const chosenCategory = categoryNames[Math.floor(Math.random() * categoryNames.length)];
+  const categoryExamples = scenarioCategories[chosenCategory];
+  const chosenExample = categoryExamples[Math.floor(Math.random() * categoryExamples.length)];
+  const scenarioSeedLine = `⚠️ קריטי, לא-אופציונלי: ה-goalType/persuasionContext חייבים-להיות-בהשראת-הדוגמה-הבאה (קטגוריה: ${chosenCategory}) — "${chosenExample}". אל-תעתיק-מילה-במילה, אבל-בנה-תרחיש-**דומה-באופיו** לדוגמה-הזו, לא-תרחיש-שרירותי-אחר.`;
+
+  const prompt = `${topicLine}
+
+מבנה: ${structure.label} — ${structure.description}
+
+⚠️ אין-כאן-שלב-חיפוש-עובדות-חיצוניות: אתה-בונה-ישירות-את-כל-השדות-הבאים, בהתבסס-על-הנושא-שהתבקש-עצמו — לא-על-עובדה-חיצונית-שצריך-למצוא. הנושא-עצמו הוא-הבסיס-לכל-השדות.
+
+${scenarioSeedLine}${failureFeedbackLine}
+
+השדות, עם-הנחיות-מדויקות-לכל-אחד:
+${hintsLines}
+
+⚠️ שדה "challengeName": שם קצר ומקורי, עברית-תקנית-ותקינה-דקדוקית — לא-חזרה-על-שם-המבנה.
+
+ענה כל שדה בשורה נפרדת, בפורמט "שם-שדה: ${fieldsLine.split(', ')[0]}-לדוגמה: ערך" — כלומר "שם-שדה: ערך".`;
+
+  const raw = await _apiCall(prompt);
+  const extractedFields = {};
+  for (const field of structure.fields) {
+    const m = raw.match(new RegExp(`${field}:\\s*([^\\n]+)`));
+    extractedFields[field] = m ? m[1].trim() : null;
+  }
+  const hasAllFields = structure.fields.every(f => extractedFields[f]);
+  if (!hasAllFields) {
+    const missing = structure.fields.filter(f => !extractedFields[f]);
+    console.warn(`[pandora][debug] כישלון-שדות-חסרים (לשוני): שדות-שחסרים: ${missing.join(', ')}\nתגובה-מלאה:\n${raw}`);
+    return { noMatch: true, raw, reason: `[pandora][debug] כישלון-שדות-חסרים (לשוני): שדות-שחסרים: ${missing.join(', ')}\nתגובה-מלאה:\n${raw}` };
+  }
+
+  // ⚠️ בדיקת-שימור-מילים-מהנושא — זהה-בעיקרון-לבדיקה-בנתיב-הרגיל, אבל
+  // כאן-היא-הבדיקה-**היחידה** לקשר-לנושא (אין-עובדות-גולמיות-לבדוק-קודם).
+  const allTopicWords = String(topic || '')
+    .replace(/\(במקצוע:.*?\)/g, '')
+    .split(/[\s,.\-]+/)
+    .filter(w => w.length >= 3);
+  if (allTopicWords.length > 0) {
+    const combinedFieldValues = Object.entries(extractedFields)
+      .filter(([key]) => key !== 'challengeName')
+      .map(([, val]) => val)
+      .join(' ');
+    const allWordsSurvived = allTopicWords.every(w => combinedFieldValues.includes(w));
+    if (!allWordsSurvived) {
+      const droppedWords = allTopicWords.filter(w => !combinedFieldValues.includes(w));
+      console.warn(`[pandora][debug] כישלון-שימור-מילים (לשוני): מילים-שנפלו: ${droppedWords.join(', ')}\nהשדות-שחולצו: ${JSON.stringify(extractedFields)}`);
+      return { noMatch: true, raw, reason: `[pandora][debug] כישלון-שימור-מילים (לשוני): מילים-שנפלו: ${droppedWords.join(', ')}\nהשדות-שחולצו: ${JSON.stringify(extractedFields)}` };
+    }
+  }
+
+  // ⚠️ בדיקת-מילת-ניגוד — מופעלת-**רק** כשהנושא-שהתבקש הוא-קטגוריה-
+  // דקדוקית-סגורה (בניין/זמן-דקדוקי/קול/משלב), שם-קיימת-תמיד-ברירת-מחדל-
+  // אוטומטית (כמו-"בניין-פעל" סתם) שדורשת-ניגוד-כדי-להיות-משמעותית.
+  // נמצא-בפועל: דרישת-ניגוד-גורפת-על-**כל** נושא (כולל-מטאפורה) חסמה-
+  // לגמרי-נושאים-רטוריים שאין-להם-ניגוד-טבעי-ברור — שם-הכמות-עצמה
+  // (minCount) כבר-מספיקה-כהוכחת-מאמץ, בלי-צורך-בניגוד-נוסף. ⚠️ ידוע-
+  // ומוסכם: נושא-דקדוקי-חדש-שלא-מכיל-אחת-מ-4-המילים-לא-יתפס-כאן — פשרה
+  // מודעת (עדיף-אתגר-קל-מדי-על-נושא-לא-מוכר, מאשר-אתגר-בלתי-אפשרי-על-
+  // נושא-מוכר, כפי-שקרה-למטאפורה).
+  const grammaticalCategoryKeywords = ['בניין', 'זמן דקדוקי', 'זמן-דקדוקי', 'קול', 'משלב'];
+  const topicNeedsContrast = grammaticalCategoryKeywords.some(k => String(topic || '').includes(k));
+  if (topicNeedsContrast && extractedFields.technique) {
+    const contrastMarkers = ['לעומת', 'בניגוד ל', 'בניגוד-ל', 'ולא', 'במקום', 'אך', 'בעוד', 'בשונה מ', 'בשונה-מ', 'על-פני', 'על פני', 'מול'];
+    const hasContrastMarker = contrastMarkers.some(m => extractedFields.technique.includes(m));
+    if (!hasContrastMarker) {
+      console.warn(`[pandora][debug] כישלון-מילת-ניגוד (לשוני): technique="${extractedFields.technique}" — לא-נמצאה-מילת-ניגוד.`);
+      return { noMatch: true, raw, reason: `[pandora][debug] כישלון-מילת-ניגוד (לשוני): technique="${extractedFields.technique}" — לא-נמצאה-מילת-ניגוד.` };
+    }
+  }
+
+  return { noMatch: false, fields: extractedFields, raw };
+}
+
+// ⚠️ שלב-1, נפרד: חיפוש-2-עובדות-בלבד, בלי-שום-נטל-חילוץ-שדות. פרומפט-
+// קצר-וממוקד — נמצא-בפועל-שקריאה-אחת-משולבת (חיפוש+חילוץ) גרמה-לעיתים-
+// ל-Claude "להיתקע" (חושב-בקול-דרך-הרבה-אפשרויות, לא-מתכנס) ולתוצאות-לא-
+// עקביות (שני-שמות-שונים-לאותו-חפץ). כאן: משימה-אחת-בלבד, קטנה-ופשוטה.
+// ⚠️ הבאת-קטע-אמיתי-מוויקיפדיה, במקום-לבקש-מ-Claude "לזכור" עובדות
+// מהאימון-שלו. נמצא-בפועל: "מי-הנידה" יצא-כתשובה-לנושא "חוקי-מלחמה" —
+// כי-בדיקת-מילים-על-טקסט-שClaude-ניסח (בכל-שלב) לא-אמינה. הרעיון: לבדוק
+// **כותרת-הדף-עצמה-שחזרה-מ-Wikipedia** (מחרוזת-נקייה, לא-מפורפרזת) —
+// בדיקה-דטרמיניסטית-על-מקור-אמיתי. ⚠️ חיפוש-כפול: קודם-כותרת-מדויקת;
+// אם-נכשל, חיפוש-טקסט-חופשי (list=search) עם-אותה-בדיקת-כותרת על-כל-
+// מועמד — "חיפוש-מלא" אמיתי, לא-ניסיון-בודד. ⚠️ מגבלה-ידועה-ומקובלת:
+// נושאים-ספציפיים-מדי-לתוכנית-הלימודים (לא-קיימים-כערך-ויקיפדיה) לא-
+// ימצאו-דף-מתאים אחרי-שני-הניסיונות — נופלים-חזרה-לנתיב-הישן (Claude-
+// מזיכרון), עם-לוג-מפורש-שמתעד-שזה-קרה.
+function checkTitleMatch(title, topicWords) {
+  return topicWords.some(w => title.includes(w));
+}
+
+function countTitleMatches(title, words) {
+  return words.filter(w => title.includes(w)).length;
+}
+
+function splitIntoSentences(text) {
+  return text
+    .split(/(?<=[.!?׃])\s+/)
+    .map(s => s.trim())
+    .filter(s => s.length >= 15);
+}
+
+async function fetchWikipediaExtract(topic) {
+  const subjectMatch = String(topic || '').match(/\(במקצוע:\s*([^)]+)\)/);
+  const subject = subjectMatch ? subjectMatch[1].trim() : '';
+  const cleanTopic = String(topic || '').replace(/\(במקצוע:.*?\)/g, '').trim();
+  if (!cleanTopic) return null;
+  const topicWords = cleanTopic.split(/[\s,.\-]+/).filter(w => w.length >= 3);
+  const subjectWords = subject.split(/[\s,.\-]+/).filter(w => w.length >= 3);
+  // ⚠️ תיקון-1: כל-מילות-הניקוד (נושא+מקצוע) — לדירוג-מועמדים בחיפוש-
+  // החופשי (fix 2), לא-רק-לבדיקת-הכותרת-המדויקת (ששם-נשאר-topicWords-בלבד,
+  // כי-כותרות-ערך-לרוב-לא-כוללות-את-שם-המקצוע-כחלק-מהכותרת-עצמה).
+  const allRankingWords = [...topicWords, ...subjectWords];
+
+  try {
+    // ⚠️ ניסיון-1: כותרת-מדויקת — נשאר-על-הנושא-בלבד (לא-כולל-מקצוע),
+    // כי-כותרות-ערך-אמיתיות-כמעט-אף-פעם-לא-משלבות-שם-מקצוע-בתוכן.
+    const exactUrl = `https://he.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=true&explaintext=true&redirects=1&origin=*&titles=${encodeURIComponent(cleanTopic)}`;
+    const exactRes = await fetch(exactUrl);
+    if (exactRes.ok) {
+      const exactData = await exactRes.json();
+      const exactPages = exactData?.query?.pages;
+      const exactPage = exactPages ? Object.values(exactPages)[0] : null;
+      if (exactPage && exactPage.missing === undefined && exactPage.extract && exactPage.title) {
+        if (topicWords.length === 0 || checkTitleMatch(exactPage.title, topicWords)) {
+          const sentences = splitIntoSentences(exactPage.extract);
+          if (sentences.length >= 2) return { title: exactPage.title, sentences };
+        } else {
+          console.warn(`[pandora][debug] כותרת-ויקיפדיה-לא-תואמת (חיפוש-מדויק): נושא="${cleanTopic}", כותרת="${exactPage.title}".`);
+        }
+      }
+    }
+
+    // ⚠️ תיקון-1: חיפוש-טקסט-חופשי כולל-עכשיו-את-המקצוע-בתוך-מחרוזת-
+    // החיפוש-עצמה (לא-רק-בבדיקה-אחרי-מעשה) — נמצא-בפועל: "חוקי-מלחמה"
+    // לבד-החזיר-דף-כללי-על-חוק-בינלאומי-מודרני, בלי-שום-קשר-לתנ"ך.
+    // חיפוש-"חוקי-מלחמה תנ"ך" ביחד נותן-למנוע-החיפוש-של-Wikipedia-עצמו
+    // סיכוי-גבוה-יותר-להעלות-דף-שמשלב-את-שניהם.
+    // ⚠️ עדיפות-2: אבל-החיפוש-המשולב (נושא+מקצוע) עלול-להיות-**ספציפי-
+    // מדי** ולפספס-ערכים-שהיו-נמצאים-עם-הנושא-לבדו (למשל "מרד-קורח
+    // תנ"ך" עלול-לא-להעלות-"מחלוקת-קורח-ועדתו", בעוד-ש"מרד-קורח" לבד-
+    // כן-יכול). כאן: אם-החיפוש-המשולב-מחזיר-0-מועמדים, מנסים-שוב עם-
+    // הנושא-לבדו (בלי-מקצוע) — רשת-ביטחון-שנייה, לפני-שמוותרים.
+    const searchQuery = subject ? `${cleanTopic} ${subject}` : cleanTopic;
+    const searchUrl = `https://he.wikipedia.org/w/api.php?action=query&format=json&list=search&srlimit=5&origin=*&srsearch=${encodeURIComponent(searchQuery)}`;
+    const searchRes = await fetch(searchUrl);
+    let candidates = [];
+    if (searchRes.ok) {
+      const searchData = await searchRes.json();
+      candidates = searchData?.query?.search || [];
+    }
+    if (candidates.length === 0 && subject) {
+      console.log(`[pandora][debug] חיפוש-משולב (נושא+מקצוע) עבור "${cleanTopic}" החזיר-0-מועמדים — מנסה-שוב-עם-נושא-בלבד.`);
+      const fallbackSearchUrl = `https://he.wikipedia.org/w/api.php?action=query&format=json&list=search&srlimit=5&origin=*&srsearch=${encodeURIComponent(cleanTopic)}`;
+      const fallbackSearchRes = await fetch(fallbackSearchUrl);
+      if (fallbackSearchRes.ok) {
+        const fallbackSearchData = await fallbackSearchRes.json();
+        candidates = fallbackSearchData?.query?.search || [];
+      }
+    }
+    {
+    // ⚠️ תיקון-משמעותי: הדירוג-הישן (חפיפת-מילים-מדויקת) לא-מצא-את-הערך-
+    // הנכון "פרשת-קרח" (מכסה-בדיוק-פרק-ט"ז-י"ח) עבור-נושא "מרד-קורח" —
+    // 2-סיבות-נפרדות: (א) מינוח-שונה (פרשה, לא-מרד), (ב) איות-שונה (קרח
+    // בלי-ו', לעומת-קורח שהתבקש). קוד-בלבד לא-יכול-לזהות-שזה-אותו-אירוע.
+    // Claude-כן-יכול, בהבנה-סמנטית. כאן: מעבירים-את-כל-המועמדים (בלי-סינון-
+    // ניקוד-קודם) ל-Claude, ומבקשים-שיבחר-את-המתאים-ביותר-משמעותית.
+    // ⚠️ עדיפות-1: לוג-דיבוג — מציג-את-רשימת-המועמדים-**כפי-שחזרה-מוויקיפדיה**,
+    // לפני-כל-סינון/בחירה. נועד-לענות-על-שאלה-פתוחה: כשחיפוש-נכשל (כמו-
+    // עבור-"מרד-קורח"), האם-זה-כי-אף-מועמד-לא-הגיע-מוויקיפדיה-מלכתחילה,
+    // או-כי-מועמדים-כן-הגיעו-אך-לא-נבחרו-כראוי. בלי-הראייה-הזו, כל-תיקון-
+    // נוסף-הוא-ניחוש.
+    console.log(`[pandora][debug] מועמדי-חיפוש-חופשי-מוויקיפדיה עבור "${cleanTopic}" (${candidates.length}): ${candidates.map(c => c.title).join(' | ') || '(ריק)'}`);
+    if (candidates.length > 0) {
+      const candidateList = candidates.map((c, i) => `${i + 1}. ${c.title}`).join('\n');
+      const pickPrompt = `נושא מבוקש: "${cleanTopic}"
+
+רשימת-ערכי-ויקיפדיה-מועמדים:
+${candidateList}
+
+איזה-ערך-הכי-רלוונטי-ומדויק-לנושא-המבוקש? ייתכן-שהכותרת-המדויקת-ביותר-משתמשת-במינוח-שונה-מהנושא-עצמו (למשל "פרשת-X" במקום "מרד-X", אם-שניהם-מתארים-את-אותו-אירוע), או-באיות-מעט-שונה — התייחס-למשמעות, לא-רק-להתאמת-מילים-מדויקת. אם-אף-מועמד-לא-רלוונטי-באמת, ענה "0".
+
+ענה **רק** במספר.`;
+      try {
+        const pickRaw = await _apiCall(pickPrompt);
+        const pickMatch = pickRaw.match(/(\d+)/);
+        const pickIdx = pickMatch ? parseInt(pickMatch[1], 10) - 1 : -1;
+        if (pickIdx >= 0 && pickIdx < candidates.length) {
+          const chosenTitle = candidates[pickIdx].title;
+          const candUrl = `https://he.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=true&explaintext=true&redirects=1&origin=*&titles=${encodeURIComponent(chosenTitle)}`;
+          const candRes = await fetch(candUrl);
+          if (candRes.ok) {
+            const candData = await candRes.json();
+            const candPages = candData?.query?.pages;
+            const candPage = candPages ? Object.values(candPages)[0] : null;
+            if (candPage && candPage.missing === undefined && candPage.extract) {
+              const sentences = splitIntoSentences(candPage.extract);
+              if (sentences.length >= 2) return { title: candPage.title, sentences };
+            }
+          }
+        }
+      } catch (e) {
+        console.warn(`[pandora][debug] בחירת-מועמד-ע"י-Claude-נכשלה: ${e.message} — נופל-לדירוג-קוד.`);
+      }
+    }
+
+    // ⚠️ גיבוי: אם-Claude-לא-הצליח-לבחור (או-הקריאה-נכשלה) — דירוג-הקוד-
+    // הישן (חפיפת-מילים) כרשת-ביטחון-שנייה, לפני-נפילה-לזיכרון-לגמרי.
+    const scoredCandidates = candidates
+      .map(c => ({ title: c.title, score: countTitleMatches(c.title, allRankingWords) }))
+      .filter(c => c.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    for (const scored of scoredCandidates) {
+      const candUrl = `https://he.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=true&explaintext=true&redirects=1&origin=*&titles=${encodeURIComponent(scored.title)}`;
+      const candRes = await fetch(candUrl);
+      if (!candRes.ok) continue;
+      const candData = await candRes.json();
+      const candPages = candData?.query?.pages;
+      const candPage = candPages ? Object.values(candPages)[0] : null;
+      if (candPage && candPage.missing === undefined && candPage.extract) {
+        const sentences = splitIntoSentences(candPage.extract);
+        if (sentences.length >= 2) return { title: candPage.title, sentences };
+      }
+    }
+    }
+
+    console.log(`[pandora] חיפוש-ויקיפדיה-כפול-נכשל עבור "${cleanTopic}" — נופל-לזיכרון-Claude (אין-מקור-חיצוני-מאומת).`);
+    return null;
+  } catch (e) {
+    console.warn(`[pandora][debug] שגיאת-רשת-בשליפת-ויקיפדיה עבור "${cleanTopic}": ${e.message} — נופל-לזיכרון-Claude.`);
+    return null;
+  }
+}
+
+async function writeDirectChallenge(topic, aspect, model, structure, previousFailureReason = null) {
+  const history = await fetchFactHistory(topic);
+  const historyLine = history.length
+    ? `\n\n⚠️ האתגרים-הבאים כבר-נכתבו-לנושא-הזה — כתוב-אתגר-שונה-מכל-אלה:\n${history.map(h => `- ${h}`).join('\n')}`
+    : '';
+  const topicLine = aspect ? `נושא: "${topic}", הקשר-ספציפי: "${aspect}"` : `נושא: "${topic}"`;
+  const subjectMatch = String(topic || '').match(/\(במקצוע:\s*([^)]+)\)/);
+  const subjectConstraintLine = subjectMatch
+    ? `\n\n⚠️ קריטי: המקצוע המוגדר הוא "${subjectMatch[1].trim()}" — האתגר חייב-להיות-תוכן-שמקורו-ישירות-בתחום-הזה-עצמו.`
+    : '';
+  const eventBoundaryLine = `\n\n⚠️ קריטי: האתגר חייב-לתאר-את-**האירוע/הטקסט-הספציפי-שהתבקש-עצמו** — לא-תוצאות-מאוחרות-או-סיפורים-נפרדים-עם-אותם-אנשים-בפרקים-אחרים.`;
+  const factAngles = [
+    'התמקד-בפרטים-מתחילת-הטקסט',
+    'התמקד-בפרטים-מסוף-הטקסט',
+    'התמקד-בדמות-משנית, לא-המרכזית-ביותר',
+    'התמקד-בפרט-מפתיע-או-לא-צפוי',
+    'התמקד-בהשלכה-ארוכת-טווח, לא-באירוע-המיידי',
+    'התמקד-במחלוקת-פרשנית-שאינה-הידועה-ביותר-על-הטקסט'
+  ];
+  const chosenAngle = factAngles[Math.floor(Math.random() * factAngles.length)];
+  const angleLine = `\n\n⚠️ קריטי-לגיוון: ${chosenAngle} — אל-תחזור-על-הזווית-ה"מובנת-מאליה"-ביותר.`;
+  const failureFeedbackLine = previousFailureReason
+    ? `\n\n⚠️ הניסיון-הקודם-נכשל, מהסיבה-הבאה: "${previousFailureReason}" — תקן-את-זה-במפורש.`
+    : '';
+
+  // ⚠️ נטישה-מכוונת-של-שדות+תבנית לטובת-כתיבה-ישירה: נמצא-בפועל שתפירת-
+  // שדות-נפרדים (textSource/characters/category1/...) לתוך-תבנית-קבועה
+  // מייצרת-ניסוח-שבור/מקוטע (משפט-פתיחה-קטוע, אי-התאמה-שם-תוכן, סיום-
+  // מעורפל) — ואף-דוגמה-אמיתית-בספריית-הקהילה-לא-בנויה-כך: כולן-פסקאות-
+  // טבעיות-שנכתבו-ברצף-אחד. כאן: Claude כותב-את-הטקסט-המלא-ישירות.
+  // ⚠️ קריטי ל-techniquePersuasion ספציפית: שימור-הרנדומיזציה-ברמת-קוד
+  // (4-קטגוריות-תרחיש) שכבר-הוכיחה-עצמה — נמצא-בפועל-בעבר-שהנחיית-טקסט
+  // בלבד ("בחר-אקראית") לא-עבדה, Claude-חזר-שוב-ושוב-על-אותו-תרחיש. כאן
+  // מוזרק-תרחיש-שנבחר-**בקוד**, לא-מוצע-כאפשרות-לClaude-לבחור-בעצמו.
+  let scenarioSeedLine = '';
+  if (structure.id === 'techniquePersuasion') {
+    const scenarioCategories = {
+      'היסטורי': ['לשכנע-מלך לחון-את-האהובה-שנידונה-למוות', 'לשכנע-גנרל לא-להוציא-להורג-מרגל-שהתגלה-כאחיו', 'לשכנע-קיסר לחון-אסיר', 'לשכנע-מפקד-צבא לדחות-מתקפה'],
+      'מקצועי-בוגר': ['לשכנע-משקיע לממן-מיזם', 'לשכנע-שופט לדחות-דיון', 'לשכנע-מעסיק להעלות-שכר', 'לשכנע-לקוח לחתום-חוזה'],
+      'דרמטי-דחוף': ['לשכנע-חטפן לשחרר-בני-ערובה', 'לשכנע-חבר לא-לקפוץ-מהגג', 'לשכנע-טייס-של-מטוס-חטוף לא-לקחת-את-הנוסעים-איתו', 'לשכנע-רופא-תורן לבצע-ניתוח-דחוף'],
+      'רגשי-אישי': ['לשכנע-הורה לא-להתגרש', 'לשכנע-אהוב/ה שעוזב/ת לחזור', 'לשכנע-חבר-הכי-טוב לא-לעזוב-את-הארץ-לתמיד', 'לשכנע-סבא/סבתא לעבור-לגור-קרוב-יותר'],
+      'דמיוני-אבסורדי': ['לשכנע-חייזר לא-לפלוש-לכדור-הארץ', 'לשכנע-רוח-רפאים לעזוב-את-הבית', 'לשכנע-בינה-מלאכותית לא-להשתלט-על-העולם', 'לשכנע-דרקון לא-לשרוף-את-הכפר'],
+      'בית-ספרי': ['הארכת-הפסקה-ב-10-דקות', 'אישור-מסיבת-סיום-שנה', 'שינוי-מיקום-טיול-שנתי', 'ביטול-מבחן-מפתיע']
+    };
+    const categoryNames = Object.keys(scenarioCategories);
+    const chosenCategory = categoryNames[Math.floor(Math.random() * categoryNames.length)];
+    const optionsInCategory = scenarioCategories[chosenCategory];
+    const chosenScenario = optionsInCategory[Math.floor(Math.random() * optionsInCategory.length)];
+    scenarioSeedLine = `\n\n⚠️ קריטי-לתרחיש: מטרת-השכנוע-של-המכתב-חייבת-להיות-מבוססת-על: "${chosenScenario}" (קטגוריית-${chosenCategory}) — התאם/י-את-הניסוח-הסופי-לנושא-הספציפי-שהתבקש, אך-אל-תסטה-מרוח-התרחיש-הזה.`;
+  }
+  const prompt = `${topicLine}${subjectConstraintLine}${eventBoundaryLine}${angleLine}${historyLine}${failureFeedbackLine}${scenarioSeedLine}
+
+${structure.writingInstructions}
+
+לפני-שאתה-עונה: כתוב-טיוטה-ראשונה-במחשבתך, ואז-בדוק-אותה-נגד-4-הקריטריונים-הבאים (שנמצאו-בפועל-כבעיות-חוזרות):
+1. **חשיפת-תשובה**: האם-הטיוטה-חושפת-חיזוי/מספר/דוגמה-פתורה שהקבוצה-הייתה-אמורה-לגלות-בעצמה? (למשל: "הכריזו: הגלגל-יסתובב-3-פעמים" — פסול, כי-נותן-את-התשובה; "הכריזו-מראש-את-מספר-הסיבובים-הצפוי" — תקין, כי-משאיר-את-החישוב-לקבוצה)
+2. **הסבר-יתר**: האם-מוסבר-"למה" הבחירה-תעבוד/תשכנע, במקום-רק-"מה" לעשות?
+3. **בהירות-מנגנון**: האם-כל-שלב-פיזי/מעשי-ניתן-לביצוע-בפועל, בלי-חוסר-פירוט?
+4. **קוהרנטיות**: האם-כל-חלקי-הטקסט-מתחברים-הגיונית-לתיאור-אחד-שלם (לא-משפט-מנותק-בסוף)?
+אם-מצאת-בעיה-באחד-מהם — תקן-אותה. החזר-**רק** את-הגרסה-הסופית-המתוקנת, לא-את-הטיוטה-ולא-את-הביקורת-עצמה.
+
+ענה **רק** בפורמט הבא (בלי-הסברים/חשיבה-בקול-נוספת):
+שם: [שם-קצר-ומקורי-לאתגר, 2-4 מילים, עברית-תקנית]
+אתגר: [הטקסט-המלא-של-האתגר-הסופי-והמתוקן, פסקה-אחת-זורמת]`;
+
+  const raw = await _apiCall(prompt);
+  const nameMatch = raw.match(/שם:\s*\*{0,2}([^*\n]+)\*{0,2}/);
+  const textMatch = raw.match(/אתגר:\s*([\s\S]+)$/);
+  const challengeName = nameMatch ? nameMatch[1].trim() : null;
+  const challengeText = textMatch ? textMatch[1].trim() : null;
+
+  if (!challengeName || !challengeText) {
+    const reason = `[pandora][debug] כישלון-פורמט (כתיבה-ישירה, ${model}, ${structure.id}): Claude לא-דבק-בפורמט "שם/אתגר". תגובה-מלאה:\n${raw}`;
+    console.warn(reason);
+    return { noMatch: true, raw, reason };
+  }
+
+  // ⚠️ בדיקת-קוד-לחשיפת-תשובה: נמצא-בפועל (dualConditionPredict) שהאתגר
+  // כתב-"הכריזו-בקול: הגלגל-יעשה-בדיוק-3-סיבובים" — מספר-נתון-מראש
+  // בטקסט-האתגר-עצמו, במקום-שיישאר-לחישוב-הקבוצה. בשונה-מבעיות-אחרות-
+  // שנמצאו-היום (ריפוד, בהירות-מנגנון, קוהרנטיות — כולן-שיפוט-סמנטי,
+  // לא-ניתנות-לבדיקת-קוד-אמינה), זו-דפוס-מבני/מיקומי: מספר-בסמיכות-ישירה
+  // למילת-"הכריז/הכריזו/הכרז". בדיקה-זו-משלימה-את-שלב-הביקורת-העצמית-
+  // בפרומפט (למעלה), לא-מחליפה-אותו.
+  const declareWords = ['הכריז', 'הכריזו', 'הכרז', 'הצהיר', 'הצהירו'];
+  const numberPattern = /\d+/;
+  for (const word of declareWords) {
+    const idx = challengeText.indexOf(word);
+    if (idx === -1) continue;
+    const nearbyText = challengeText.slice(idx, idx + 60);
+    if (numberPattern.test(nearbyText)) {
+      const reason = `[pandora][debug] כישלון-חשיפת-תשובה (כתיבה-ישירה, ${model}, ${structure.id}): נמצא-מספר-בסמיכות-למילת-"${word}" — ייתכן-שהתשובה-נחשפה-בטקסט-במקום-שתישאר-לחישוב-הקבוצה. קטע: "${nearbyText}"`;
+      console.warn(reason);
+      return { noMatch: true, raw, reason };
+    }
+  }
+
+  saveFactToHistory(topic, challengeText.slice(0, 150));
+  return { noMatch: false, challengeName, challengeText, raw };
+}
+
+async function findFactsAndFieldsInOneCall(topic, aspect, model, structure, previousFailureReason = null) {
+  const history = await fetchFactHistory(topic);
+  const historyLine = history.length
+    ? `\n\n⚠️ העובדות-הבאות כבר-שימשו לנושא-הזה — מצא-עובדות-שונות-מאלה:\n${history.map(h => `- ${h}`).join('\n')}`
+    : '';
+  const topicLine = aspect ? `נושא: "${topic}", הקשר-ספציפי: "${aspect}"` : `נושא: "${topic}"`;
+  const subjectMatch = String(topic || '').match(/\(במקצוע:\s*([^)]+)\)/);
+  const subjectConstraintLine = subjectMatch
+    ? `\n\n⚠️ קריטי: המקצוע המוגדר הוא "${subjectMatch[1].trim()}" — 2-העובדות חייבות-להיות-תוכן-שמקורו-ישירות-בתחום-הזה-עצמו (למשל, מקצוע="תנ"ך" → תוכן-מקראי-ממש, לא-התפתחות-מאוחרת/מודרנית-שקשורה-לנושא-אך-אינה-מהמקצוע-עצמו). אל-תבחר-זווית-כללית-על-הנושא-שאינה-שייכת-למקצוע-הספציפי-שהוגדר.`
+    : '';
+  const failureFeedbackLine = previousFailureReason
+    ? `\n\n⚠️ הניסיון-הקודם-נכשל, מהסיבה-הבאה: "${previousFailureReason}" — תקן-את-זה-במפורש-בניסיון-הזה, אל-תחזור-על-אותה-טעות.`
+    : '';
+  const eventBoundaryLine = `\n\n⚠️ קריטי: 2-העובדות חייבות-לתאר-את-**האירוע-הספציפי-שהתבקש-עצמו** (לא-רק-אנשים/מקומות-שקשורים-אליו-בעקיפין) — אם-הנושא-הוא-אירוע-מסוים (כמו-"מרד-קורח"), אל-תשתמש-בעובדות-על-**תוצאות-מאוחרות** או-**סיפורים-נפרדים** שבהם-מופיעים-אותם-אנשים-בהקשר-אחר-לגמרי (למשל-סיפור-אחר-לגמרי-על-אחד-המשתתפים, בפרק-אחר). המשך-לתאר-את-האירוע-**עצמו**.`;
+  const macroVisibilityLine = ['physical', 'bodily', 'improvisation', 'distribution'].includes(model)
+    ? ' ⚠️ חובה, לדגם-זה: שתי-העובדות חייבות לתאר תופעה ברמה-שרואים-בעין (חפץ, כוח, תהליך-מוחשי) — לא רמה-מולקולרית/תוך-תאית.'
+    : model === 'judicial'
+    ? ' ⚠️ חובה, לדגם-זה: שתי-העובדות חייבות לכלול-החלטה/עמדה/פעולה-של-אדם-או-קבוצה — לא-רק-תיאור-מצב.'
+    : '';
+  const factAngles = [
+    'התמקד-בפרטים/פעולות-מתחילת-האירוע-או-הטקסט',
+    'התמקד-בפרטים/פעולות-מסוף-האירוע-או-הטקסט',
+    'התמקד-בדמות/פרט-משני, לא-המרכזי-ביותר',
+    'התמקד-בפרט-מספרי-או-כמותי-מפתיע',
+    'התמקד-בתוצאה-או-השלכה-ארוכת-טווח, לא-באירוע-המיידי',
+    'התמקד-במחלוקת-פרשנית-או-נקודת-אי-בהירות-בטקסט'
+  ];
+  const chosenAngle = factAngles[Math.floor(Math.random() * factAngles.length)];
+  const angleLine = `\n\n⚠️ קריטי-לגיוון: ${chosenAngle} — אל-תחזור-על-הזווית-ה"מובנת-מאליה"-ביותר-אם-כבר-חשבת-עליה, חפש-את-הזווית-הספציפית-הזו-דווקא.`;
+  const fieldsLine = `${structure.fields.join(', ')}`;
+
+  // ⚠️ ארכיטקטורה-חדשה, קריאה-אחת: מאחד-את-2-השלבים-הישנים (חיפוש-עובדות
+  // + חילוץ-שדות, כל-אחד-קריאת-Claude-נפרדת) לקריאה-**אחת**. נמצא-בפועל:
+  // עד-4-קריאות-Claude-מחוברות (ויקיפדיה-בחירה+חילוץ-משפטים, או-זיכרון,
+  // ואז-חילוץ-שדות) על-כל-ניסיון חצו-לעיתים-קרובות 10-שניות. כאן: Claude
+  // חושב-2-עובדות **וממלא-מיד** את-השדות, באותה-תשובה — קריאה-אחת-בלבד.
+  // ⚠️ ויתור-מודע-על-ויקיפדיה-כמסלול-ראשי: הוכח-בפועל-לא-אמין (נכשל-על-
+  // רוב-הנושאים-שנבדקו, גם-עם-בחירת-מועמד-סמנטית) ומוסיף-קריאות-משלו.
+  // ההשקעה-עכשיו בפרומפט-אחד-מקיף (גבולות-אירוע/מקצוע, זווית-גיוון,
+  // כללי-שדות-מלאים), לא-בשרשרת-בדיקות-אחרי-מעשה.
+  const prompt = `${topicLine}
+
+מצא **בדיוק-2** עובדות קונקרטיות, מפתיעות, וקשורות-מהותית-זו-לזו — ומיד-אחר-כך חלץ-מהן ערכים-קצרים לשדות-הבאים, עבור-מבנה: ${structure.label} — ${structure.description}
+
+⚠️ העובדות חייבות-להתאים-למבנה-הזה **כמו-כפפה-ליד** — לא-סתם-עובדות-מפתיעות-בנושא, אלא-כאלה-שביחד-**יוצרות-בדיוק** את-סוג-המנגנון/הטיעון שהמבנה-דורש.${macroVisibilityLine}${historyLine}${subjectConstraintLine}${eventBoundaryLine}${angleLine}${failureFeedbackLine}
+
+שדות-לחילוץ:
+${fieldsLine}
+
+⚠️ "ה"-הידיעה, קריטי: כל-שם-עצם-בשדה שמתאר-פריט-ספציפי-ומוגדר — חייב-לכלול-"ה"-הידיעה, כאילו-בא-אחרי-"את" (למשל "המעצר" לא "מעצר").
+
+⚠️ חובה, לכל-השדות: השדות מתארים משימה-חדשה שהקבוצה תבצע, בהשראת-שתי-העובדות — לא תיאור-מחדש שלהן. אל-תכתוב-בתוך-שדה-הצלחה את-המילה "הצלחה". כל-שדה ביטוי-שם-קצר-וטבעי (2-5 מילים, בלי-שרשרת-מקפים). ⚠️ עקביות-פנימית, קריטית: אם-חפץ/כוח-מסוים מוזכר ביותר-משדה-אחד, השתמש-**באותה-מילה-הקונקרטית-המדויקת** בכל-מקום. ⚠️ שדה "challengeName": שם-מקורי-וקצר, לא-חזרה-על-שם-המבנה. ⚠️ כל-מילה-בכל-שדה חייבת-להיות-מעוגנת באחת-משתי-העובדות — אסור-להמציא-מילה/חפץ שלא-מופיע-בהן. ⚠️ שדות-תוצאה: חייבים-להיות-**ביטוי-שם** — לא-משפט-מלא-עם-נושא-ופועל.
+
+ענה **רק** בפורמט הבא (בלי-הסברים/חשיבה-בקול-נוספת):
+עובדה-1: [משפט מפתיע, עד 25 מילה]
+עובדה-2: [משפט מפתיע שני, קשור-מהותית-לראשונה, עד 25 מילה]
+[כל-שדה בשורה נפרדת, בפורמט "שם-שדה: ערך"]`;
+
+  const raw = await _apiCall(prompt);
+  const fact1Match = raw.match(/עובדה-1:\s*([^\n]+)/);
+  const fact2Match = raw.match(/עובדה-2:\s*([^\n]+)/);
+  const fact1 = fact1Match ? fact1Match[1].trim() : null;
+  const fact2 = fact2Match ? fact2Match[1].trim() : null;
+  if (!fact1 || !fact2) {
+    const reason = `[pandora][debug] כישלון-פורמט (קריאה-אחת, ${model}, ${structure.id}): Claude לא-דבק-בפורמט "עובדה-1/עובדה-2". תגובה-מלאה:\n${raw}`;
+    console.warn(reason);
+    return { noMatch: true, raw, reason };
+  }
+
+  const extractedFields = {};
+  for (const field of structure.fields) {
+    const m = raw.match(new RegExp(`${field}:\\s*([^\\n]+)`));
+    extractedFields[field] = m ? m[1].trim() : null;
+  }
+  const hasAllFields = structure.fields.every(f => extractedFields[f]);
+  if (!hasAllFields) {
+    const missing = structure.fields.filter(f => !extractedFields[f]);
+    const reason = `[pandora][debug] כישלון-שדות-חסרים (קריאה-אחת, ${model}, ${structure.id}): שדות-שחסרים: ${missing.join(', ')}`;
+    console.warn(reason);
+    return { noMatch: true, raw, reason };
+  }
+
+  const issues = [];
+  if (extractedFields.textSource) {
+    const referenceWords = ['פרק', 'פרקים', 'פסוק', 'פסוקים', 'ספר'];
+    const words = extractedFields.textSource.split(/\s+/);
+    let hasChapterRange = false;
+    for (const word of words) {
+      const parts = word.split(/[-–]/);
+      if (parts.length === 2) {
+        const isChapterCode = (p) => {
+          const clean = p.replace(/["']/g, '');
+          return clean.length >= 1 && clean.length <= 3 && !referenceWords.includes(clean);
+        };
+        if (isChapterCode(parts[0]) && isChapterCode(parts[1])) { hasChapterRange = true; break; }
+      }
+    }
+    if (hasChapterRange) {
+      issues.push(`textSource="${extractedFields.textSource}" נראה-כטווח-רב-פרקים (נדרש-פרק-בודד)`);
+    }
+  }
+  if (extractedFields.contestedAction) {
+    const sequenceWords = ['אחרי', 'לאחר', 'ואז', 'בגלל', 'כתוצאה מ', 'כתוצאה-מ', 'ולכן', 'בעקבות'];
+    if (sequenceWords.some(w => extractedFields.contestedAction.includes(w))) {
+      issues.push(`contestedAction="${extractedFields.contestedAction}" מכיל-מילת-רצף (כנראה-2-רגעים-יחד)`);
+    }
+  }
+  // ⚠️ בדיקת-עיגון-דמויות הוסרה-לגמרי: נמצא-בפועל שהיא-שוברת-נושאים-לא-
+  // מקראיים (היסטוריה: "מדינות-הציר", "ועידת-השלום" — ישויות-קולקטיביות,
+  // לא-שמות-פרטיים — אף-פעם-לא-יופיעו-מילולית-בעובדה). אותה-מגבלה-מיסודית
+  // כמו-בדיקת-עיגון-הקטגוריות-שהוסרה-קודם: תוכן-פרשני/מקובץ אינו-אמור-
+  // לחזור-מילולית-על-העובדה-הגולמית.
+  if (issues.length > 0) {
+    const combinedReason = `כישלונות-מצטברים (קריאה-אחת, ${model}, ${structure.id}): ${issues.join(' | ')}`;
+    console.warn(`[pandora][debug] ${combinedReason}`);
+    return { noMatch: true, raw, reason: combinedReason };
+  }
+
+  return { noMatch: false, fact1, fact2, fields: extractedFields, raw };
+}
+
+function looksScientific(topic) {
+  // ⚠️ תיקון-איות: "פיסיקה" (ס) לעומת "פיזיקה" (ז) — שני-איותים-שונים לאותה
+  // מילה. הרשימה הקודמת הכילה רק "פיזיקה", והתיישום-בפועל (שדה-מקצוע
+  // בפרופיל) כתוב "פיסיקה" — גרם ל-looksScientific להחזיר false תמיד על
+  // נושאי-פיזיקה, למרות שהמורה בחר "פיסיקה" בפרופיל שלו.
+  const keywords = ['פיזיקה', 'פיסיקה', 'כימיה', 'ביולוגיה', 'מתמטיקה', 'תא', 'מולקולה', 'אטום', 'חוק', 'משוואה', 'תופעה', 'ניסוי', 'אנרגיה', 'כוח', 'תגובה', 'יסוד', 'תא-הגוף', 'גנטיקה', 'תורשה', 'חשבון', 'הסתברות', 'גיאומטריה'];
+  const t = String(topic || '');
+  return keywords.some(k => t.includes(k));
+}
+
+// ⚠️ נוסף אחרי-ריצות-חוזרות שהראו (4/4 ניסיונות!) שמושגים-סטטיסטיים/מופשטים
+// (אנטרופיה, הסתברות) לא-מתאימים לאף-אחד מ-5-הדגמים-המקוריים — כולם דורשים
+// חפץ-בודד-לתפעל, בעוד שהמושג עצמו קיים רק כדפוס שמתגלה דרך ריבוי-חזרות.
+// בודק לפי הנושא-עצמו (לא המקצוע) — נבדק לפני looksScientific בבחירת-הדגם,
+// כי נושא כמו "אנטרופיה" במקצוע "פיזיקה" היה-אחרת מסווג-מדעי-רגיל ומפספס
+// את הדגם החדש שנבנה בדיוק בשבילו.
+function looksAbstract(topic) {
+  const keywords = ['אנטרופיה', 'הסתברות', 'פיזור', 'שכיחות', 'ממוצע', 'סטטיסטיקה', 'ברירה טבעית', 'התפלגות', 'שונות', 'אקראיות', 'מקריות'];
+  const t = String(topic || '');
+  return keywords.some(k => t.includes(k));
+}
+
+// ⚠️ נוסף בסבב-נפרד, לצד-הדגם-החדש "התגלמות": מילות-מפתח אלגבריות/גיאומטריות
+// מופשטות — שונות-במהותן מ-looksAbstract (הסתברות/סטטיסטיקה). "מספרים-
+// מרוכבים" ודומיהם לא-נתפסו-על-ידי-שום-בדיקה-קיימת, ונפלו-לרוב ל-
+// looksScientific (בגלל מילת-המקצוע "מתמטיקה") — מה שניתב-אותם ל-[פיזי,
+// אלתור], בלי-שום-דגם-שמתאים-להם-באמת. נבדק **לפני** looksScientific
+// באותו-סדר-עדיפות שכבר-קיים בין isAbstract ל-isScientific.
+function looksAbstractMath(topic) {
+  const keywords = ['מספרים מרוכבים', 'מספר מרוכב', 'מטריצה', 'מטריצות', 'וקטור', 'וקטורים', 'טרנספורמציה', 'טרנספורמציות', 'פונקציה', 'פונקציות', 'סדרה', 'סדרות', 'לוגריתם'];
+  const t = String(topic || '');
+  return keywords.some(k => t.includes(k));
+}
+
+// ⚠️ מילות-מפתח-לזיהוי-שהנושא-מתאים-לדגם-הלשוני. הרשימה-הורחבה-כשהדגם-
+// צומצם-למבנה-אחד-כללי (techniquePersuasion) — אין-עוד-צורך-בהתאמה-
+// מדויקת-למבנה-ספציפי (technique הוא-שדה-תיאורי-חופשי), רק-בזיהוי-שזה-
+// נושא-לשוני-בכלל.
+function looksLinguistic(topic) {
+  const keywords = ['האנשה', 'הפשטה', 'שכנוע', 'רטוריקה', 'אמצעי שכנוע', 'מכתב שכנוע', 'מטאפורה', 'דימוי', 'קול פעיל', 'קול סביל', 'משלב', 'זמן דקדוקי', 'בניין', 'שורש', 'נטייה', 'נטיות', 'פועל', 'תחביר', 'סוגי משפט', 'ניקוד', 'אמצעים רטוריים', 'לשון', 'משפט פשוט', 'משפט מורכב', 'משפט מאוחה'];
+  const t = String(topic || '');
+  return keywords.some(k => t.includes(k));
+}
+
+// ⚠️ תיקון: הוחזרה, אחרי-שגילינו-שהסרתה (בסבב-הקודם, כשעברנו-לבחירת-דגם-
+// אקראית) חשפה-מחדש בדיוק-את-הבעיה-שהיא-נועדה-למנוע — פיזי נבחר-אקראית
+// על-נושא-נרטיבי (יוסף-בכלא), ומובטח-נכשל 3-פעמים-ברצף בבלימה-המוקדמת
+// (אין-פרמטר-פיזי בעובדה-טקסטואלית), 114-שניות בזבוז לפני-שמציגים-בלגן.
+function looksNarrative(topic) {
+  const keywords = ['פרק', 'מחזה', 'סיפור', 'רומן', 'שיר', 'פרשה', 'סוגה', 'ספר', 'סיפורת', 'דרמה', 'עלילה', 'דמות', 'דמויות', 'מחבר', 'מחזאי', 'סופר', 'משורר', 'שירה'];
+  // ⚠️ תיקון: מילות-המפתח-בנושא לא-תפסו נושאים-נרטיביים-במקצוע (כמו "יעקב-
+  // ועשיו" בתנ"ך, בלי-מילה "פרק" בטקסט עצמו) — topicWithSubject כבר-כולל
+  // "(במקצוע: X)" כתת-מחרוזת, אז מוסיפים גם שמות-מקצועות-נרטיביים-מובהקים.
+  const narrativeSubjects = ['תנ"ך', 'היסטוריה', 'ספרות', 'לשון'];
+  const t = String(topic || '');
+  return keywords.some(k => t.includes(k)) || narrativeSubjects.some(s => t.includes(s));
+}
+
+// שימוש: await window._testThreeFacts('מגנטיות', 'רק אלקטרומגנטים', 'physical')
+window._testThreeFacts = async function(topic, aspect, model) {
+  const structuresByModel = {
+    physical: PHYSICAL_STRUCTURES, judicial: JUDICIAL_STRUCTURES, artistic: ARTISTIC_STRUCTURES,
+    bodily: BODILY_STRUCTURES, improvisation: IMPROVISATION_STRUCTURES, distribution: DISTRIBUTION_STRUCTURES, embodiment: EMBODIMENT_STRUCTURES, linguistic: LINGUISTIC_STRUCTURES
+  };
+  const m = model || 'physical';
+  const structures = structuresByModel[m] || PHYSICAL_STRUCTURES;
+  const structure = pickRandomStructure(structures);
+  console.log('מבנה-נבחר (קוד, אקראי):', structure.id);
+  const result = m === 'linguistic'
+    ? await findFieldsDirectlyForLinguistic(topic, aspect, structure)
+    : await findFactsAndFieldsInOneCall(topic, aspect, m, structure);
+  if (result.noMatch) { console.log('לא-נמצא-זוג-מתאים-למבנה'); return null; }
+  console.log('נמצאו (חיפוש-ממוקד):', result.fact1, '+', result.fact2);
+  console.log('שדות:', result.fields);
+  return { ...result, structureId: structure.id };
+};
+
+// ⚠️ שכבת-זיכרון — צעד 2 מתוך 3: כלי-בדיקה-ידני-מ-Console, לא-רץ-אוטומטית
+// ולא-משנה-שום-דבר-בעצמו. מרכז את מה שעשינו-ידנית כל-היום (לגלול-בלוגים,
+// לספור-כישלונות-לפי-דגם-ונושא) לפקודה-אחת. עדיין דורש שיפוט-אנושי אחרי-
+// שרואים את-התוצאה — לא-מציע-תיקונים, רק-מציג-דפוסים. צעד-3 (בדיקת-מכלילות
+// לפני-אימוץ-כלל-חדש) עדיין-לא-קיים כאן בכלל — נשאר תהליך-אנושי, במכוון.
+// שימוש: await window._analyzeGenerationLog(100)
+window._analyzeGenerationLog = async function(n) {
+  n = n || 100;
+  if (!db) { console.warn('[pandora] אין חיבור ל-Firebase'); return null; }
+  const snap = await db.ref('generationLog').orderByChild('ts').limitToLast(n).once('value');
+  const entries = [];
+  snap.forEach(child => entries.push(child.val()));
+
+  const byModel = {}; // model -> { attempts, successes }
+  for (const entry of entries) {
+    for (const a of (entry.attempts || [])) {
+      byModel[a.model] = byModel[a.model] || { attempts: 0, successes: 0, failureReasons: {} };
+      byModel[a.model].attempts++;
+      if (a.valid) {
+        byModel[a.model].successes++;
+      } else {
+        for (const issue of (a.issues || [])) {
+          const key = issue.slice(0, 40);
+          byModel[a.model].failureReasons[key] = (byModel[a.model].failureReasons[key] || 0) + 1;
+        }
+      }
+    }
+  }
+
+  console.log(`[pandora] ניתוח ${entries.length} בקשות אחרונות:`);
+  console.table(Object.entries(byModel).map(([model, s]) => ({
+    דגם: MODEL_TEMPLATES[model] ? MODEL_TEMPLATES[model].label : model,
+    ניסיונות: s.attempts,
+    הצלחות: s.successes,
+    'שיעור-הצלחה': s.attempts ? Math.round(100 * s.successes / s.attempts) + '%' : '—'
+  })));
+  console.log('סיבות-כישלון נפוצות, לפי דגם:');
+  for (const [model, s] of Object.entries(byModel)) {
+    const sorted = Object.entries(s.failureReasons).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    if (sorted.length) console.log(` ${MODEL_TEMPLATES[model] ? MODEL_TEMPLATES[model].label : model}:`, sorted);
+  }
+  return byModel;
+};
+
+// ── callClaude — נקודת הכניסה הקיימת, ממשק זהה (בלי פרמטרים, מחזירה מחרוזת) ──
+async function callClaude() {
+  // ⚠️ תיקון: "הקשר נוסף" (שדה room-facts, נשמר ל-currentRoom.facts) לא-מתמזג
+  // יותר בשקט לתוך מחרוזת-הנושא — הוא מועבר בנפרד ל-generateChallengeCore, כדי
+  // שתהיה לו שורת-דרישה-מחייבת משלו בפרומפט, לא רק "רקע" שנבלע
+  // בתוך תיאור-הנושא הכללי.
+  const baseTopic = currentRoom?.topic || '';
+  const aspect = currentRoom?.facts || '';
+
+  const teacherName = currentUser?.name || '';
+  const subject = currentUser?.profile?.subject || localStorage.getItem('pandora_subject_' + teacherName) || '';
+
+  const onProgress = (msg) => {
+    console.log('[pandora] ' + msg);
+    const loaderText = document.getElementById('ai-substatus');
+    if (loaderText) loaderText.textContent = msg;
+  };
+
+  try {
+    const parsed = await generateChallengeCore(baseTopic, subject, onProgress, aspect);
+    // ⚠️ verificationScore לא-עובר דרך המחרוזת-השטוחה שמוחזרת כאן (כל-הקוראים
+    // כבר מפענחים-אותה מחדש עם parseChallenge, שלא-יודע-על-הציון-הזה בכלל).
+    // נשמר-בצד, על currentRoom, כדי שקוד-התצוגה יוכל-לקרוא-אותו בלי לשנות
+    // את-חתימת-הפונקציה הזו או את כל-הקוראים-לה.
+    if (currentRoom) currentRoom._lastVerificationScore = parsed.verificationScore;
+    const prepLine = parsed.needsPrep ? `\nדורש הכנה: ${parsed.needsPrep}` : '';
+    return `שם: ${parsed.challengeName}\nאתגר: ${parsed.challengeText}${prepLine}`;
+  } catch (e) {
+    console.error('[pandora] callClaude failed:', e);
+    return '❌ שגיאה בייצור האתגר';
+  }
+}
+
+
+function fixLanguageMechanical(text) {
+  return text
+    .replace(/באגלית/g, 'באנגלית')
+    .replace(/מנצח׳/g, 'מנצח')
+    .replace(/יוצאים בקול/g, 'צועקים')
+    .replace(/רוצים במקום/g, 'רצים במקום')
+    .replace(/יוצא בקול/g, 'צועק')
+    .replace(/וצעוק/g, 'ולצעוק')
+    .replace(/ולצעוקות/g, 'וצועקות')
+    .replace(/ולצועקות/g, 'וצועקות')
+    .replace(/ולצעוקים/g, 'וצועקים')
+    .replace(/ולקופצות/g, 'וקופצות')
+    .replace(/ולרצות/g, 'ורצות')
+    .replace(/ולצעוק בחזרה/g, 'וצועק בחזרה')
+    .replace(/קרוון/g, 'קריאון');
+}
+
+// ⚠️ פושט, סבב-רביעי: לא-עוד קריאת-API לתיקון-עברית — מכני-בלבד. חוסך
+// קריאה-שלמה לכל-אתגר (גם-מוצלח), במחיר-ויתור-על-תיקוני-דקדוק-עדינים
+// (מין/גוף/זמן) שהקריאה-הישנה סיפקה. מוותרים-במודע, לפי-בקשה מפורשת
+// למהירות. שאר-הבעיות (markdown, הרחבת-טקסט) שכבר-תוקנו-שם היו-ממילא
+// תוצרי-לוואי של-הקריאה-שהוסרה — לא-רלוונטיות-יותר.
+async function regenerateChallenge() {
+  // איפוס כדי שדוגמאות ופידבקים עדכניים ייטענו מחדש
+  if (currentRoom) {
+    currentRoom._fastPrompt = null;
+    currentRoom._historyLoaded = false;
+    currentRoom._seferiaLoaded = false;
+    currentRoom._wikiLoaded = false;
+    currentRoom._kernel = null;
+    currentRoom._judicialKernel = null;
+    currentRoom._predictionKernel = null;
+    currentRoom._bodilyKernel = null;
+    currentRoom._lastFailReason = null; // איפוס סיבת כשל — לא לשאת בין ייצורים
+    // _lastSeedIdx נשמר בכוונה — מבטיח seed שונה בכל regenerate
+    // (לא מאפסים — הסיבוב ממשיך מאיפה שנעצר)
+    // איפוס דגם אתגר שנבחר אוטומטית — ייבחר מחדש בריצה הבאה
+    if (currentRoom._isLimitingPrinciple) currentRoom._challengeModel = 'physical';
+  }
+  document.getElementById('preview-result').style.display = 'none';
+  document.getElementById('ai-loader').style.display = 'block';
+  const fill = document.getElementById('ai-bar-fill');
+  fill.style.width = '0%';
+  setTimeout(() => { fill.style.width = '85%'; }, 50);
+  const challenge = await callClaude();
+  fill.style.width = '100%';
+  setTimeout(() => {
+    document.getElementById('ai-loader').style.display = 'none';
+    document.getElementById('preview-result').style.display = 'block';
+    const parsed = parseChallenge(challenge);
+    const nameEl = document.getElementById('preview-challenge-name');
+    if (nameEl) nameEl.textContent = parsed.challengeName ? '✨ ' + parsed.challengeName : '';
+    const scoreEl = document.getElementById('preview-verification-score');
+    if (scoreEl) {
+      const score = currentRoom?._lastVerificationScore;
+      scoreEl.textContent = (score !== null && score !== undefined) ? `אימות: ${score}/5` : '';
+    }
+    document.getElementById('preview-challenge-txt').textContent = parsed.challengeText;
+    document.getElementById('edit-challenge').value = parsed.challengeText;
+    currentRoom.generatedChallenge = parsed.challengeText;
+    currentRoom.challengeName = parsed.challengeName;
+  }, 400);
+}
+
+// ══════════════════════════════════════════
+// COMMUNITY LIBRARY
+// ══════════════════════════════════════════
+async function shareToLibrary() {
+  const challenge = document.getElementById('edit-challenge').value.trim() || currentRoom.generatedChallenge;
+  const name = currentRoom.challengeName || '';
+  const subject = currentUser?.profile?.subject || localStorage.getItem('pandora_subject_' + currentUser?.name) || '';
+  const grades = currentUser?.profile?.grades || localStorage.getItem('pandora_grades_' + currentUser?.name) || '';
+  const topic = currentRoom?.topic || '';
+  if (!challenge) { showNotif('אין אתגר לשתף'); return; }
+  if (!db) { showNotif('אין חיבור — לא ניתן לשתף'); return; }
+  try {
+    // תיוג לפי הדגם שבאמת יצר את האתגר — לא ניחוש לפי מקצוע, כי מורה תנ"ך יכול
+    // לקבל אתגר ב-physical (למשל), ותיוג שגוי שובר את חיפוש-העוגנים לפי דגם.
+    const _autoModel = currentRoom?._challengeModel || (() => {
+      const s = (subject || '').trim();
+      if (['חינוך גופני','ספורט','ריקוד'].includes(s)) return 'bodily';
+      if (['ציור','מוזיקה','אמנות'].includes(s)) return 'artistic';
+      if (['תנ"ך','מקרא','ספרות','היסטוריה','אזרחות','פילוסופיה','לשון','שפה','אנגלית'].includes(s)) return 'judicial';
+      return 'physical';
+    })();
+    const libRef = await db.ref('library').push({
+      name, challenge, subject, grades, topic,
+      challengeModel: _autoModel,
+      model: _autoModel,
+      sharedBy: currentUser?.name || 'אנונימי',
+      sharedAt: Date.now(),
+      anchor: currentRoom?._knowledgeAnchor || '',
+      ignitedCount: 0
+    });
+    // שמור את המפתח — לעדכון ignitedCount בדירוג "הצית"
+    if (currentRoom) currentRoom._libraryKey = libRef.key;
+    showNotif('✅ האתגר נוסף למאגר הקהילתי!');
+  } catch(e) { showNotif('שגיאה בשמירה — נסה שוב'); }
+}
+
+async function openLibrary() { 
+  go('teacher-library'); 
+  document.getElementById('library-results').innerHTML = '<p style="text-align:center;color:var(--text3);padding:30px;">בחר מקצוע וגיל כדי לחפש אתגרים</p>';
+  libraryItems = [];
+}
+
+async function loadLibrary() {
+  const resultsEl = document.getElementById('library-results');
+  const subject = document.getElementById('lib-subject').value.trim();
+  const grade = document.getElementById('lib-grade').value;
+  
+
+
+  resultsEl.innerHTML = '<p style="text-align:center;color:var(--text3);padding:20px;">מחפש...</p>';
+
+  if (!db) { resultsEl.innerHTML = '<p style="text-align:center;color:var(--text3);">אין חיבור</p>'; return; }
+  try {
+    const snap = await db.ref('library').get();
+    const items = snap.val() || {};
+    libraryItems = Object.entries(items).map(([id, item]) => ({ id, ...item }));
+    filterLibrary();
+  } catch(e) { 
+    resultsEl.innerHTML = '<p style="text-align:center;color:var(--text3);">שגיאה בטעינה</p>'; 
+  }
+}
+
+function filterLibrary() {
+  const subject = document.getElementById('lib-subject').value.trim().toLowerCase();
+  const grade = document.getElementById('lib-grade').value;
+  const filtered = libraryItems.filter(item => {
+    const matchSubject = !subject || (item.subject || '').toLowerCase().includes(subject);
+    const matchGrade = !grade || (item.grades || '').includes(grade);
+    return matchSubject && matchGrade;
+  });
+  renderLibrary(filtered);
+}
+
+function renderLibrary(items) {
+  const resultsEl = document.getElementById('library-results');
+  if (!items.length) { resultsEl.innerHTML = '<p style="text-align:center;color:var(--text3);padding:30px;">לא נמצאו אתגרים</p>'; return; }
+  const totalCount = libraryItems.length;
+  const filteredCount = items.length;
+  resultsEl.innerHTML = items.map(item => `
+    <div class="card" style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--accent);">✨ ${item.name || 'אתגר'}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">${(item.subject || '').split(',')[0].trim()}${item.grades ? ' · ' + (item.grades || '').replace(/,.*$/, '').replace(/שיתופי|תחרותי|עצמאי/g, '').trim() : ''}${item.topic ? ' · ' + item.topic : ''}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button onclick="editFromLibrary('${item.id}')" style="background:rgba(168,50,50,.12);color:var(--accent);border:1px solid rgba(168,50,50,.3);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;">✏️</button>
+          <button onclick="flagAsWeak('${item.id}')" title="סמן כחלש — 3 סימונים ימחקו" style="background:rgba(239,159,39,.12);color:var(--amber);border:1px solid rgba(239,159,39,.3);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;">⚑</button>
+          <button onclick="deleteFromLibrary('${item.id}')" style="background:rgba(194,59,59,.15);color:var(--red);border:1px solid rgba(194,59,59,.3);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;">🗑</button>
+          <button onclick="useFromLibrary('${item.id}')" style="background:var(--accent);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">השתמש ←</button>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.6;">${item.challenge}</div>
+    </div>`).join('');
+  const countEl = document.createElement('div');
+  countEl.style.cssText = 'text-align:center;color:var(--accent);font-size:14px;font-weight:700;margin-bottom:12px;padding:8px;background:rgba(168,50,50,.08);border-radius:8px;';
+  countEl.textContent = filteredCount === totalCount ? `${totalCount} אתגרים במאגר` : `${filteredCount} מתוך ${totalCount} אתגרים`;
+  resultsEl.insertBefore(countEl, resultsEl.firstChild);
+}
+
+function toggleManualAdd() {
+  const form = document.getElementById('manual-add-form');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveManualChallenge() {
+  const name = document.getElementById('manual-name').value.trim();
+  const challenge = document.getElementById('manual-challenge').value.trim();
+  const subject = document.getElementById('manual-subject').value.trim();
+  const grades = document.getElementById('manual-grades').value.trim();
+  const topic = document.getElementById('manual-topic').value.trim();
+  const model = document.getElementById('manual-model').value;
+
+  if (!name || !challenge) { alert('נא למלא שם ותיאור'); return; }
+
+  try {
+    const newRef = db.ref('library').push();
+    await newRef.set({
+      name,
+      challenge,
+      subject: subject || '',
+      grades: grades || '',
+      topic: topic || '',
+      model,
+      challengeModel: model,
+      addedBy: currentUser?.name || 'מורה',
+      createdAt: Date.now(),
+      approved: true
+    });
+    showNotif('✓ האתגר נשמר למאגר');
+    document.getElementById('manual-add-form').style.display = 'none';
+    document.getElementById('manual-name').value = '';
+    document.getElementById('manual-challenge').value = '';
+    document.getElementById('manual-subject').value = '';
+    document.getElementById('manual-grades').value = '';
+    document.getElementById('manual-topic').value = '';
+    loadLibrary();
+    // אוטומציה: צור anchor ברקע
+    const _anchorKey = newRef.key;
+    fetch('/api/claude', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ system: `הנושא: "${topic||name}". האתגר: "${challenge}".
+ענה על שלוש שאלות — שלושה משפטים קצרים:
+1. מה הידע שקובע מי מצליח?
+2. מה ההנחה השגויה שמי שלא למד יכניס?
+3. מה הרגע שבו הכישלון גלוי לכולם בלי פרשנות?`, userPrompt: 'ענה.' })
+    }).then(r => r.json()).then(d => {
+      const t = (d.content?.[0]?.text || '').trim();
+      if (t && t.length > 30) db.ref('library/' + _anchorKey).update({ anchor: t });
+    }).catch(() => {});
+  } catch(e) { alert('שגיאה בשמירה'); }
+}
+
+async function flagAsWeak(id) {
+  try {
+    const snap = await db.ref('library/' + id + '/flags').get();
+    const flags = (snap.val() || 0) + 1;
+    if (flags >= 3) {
+      if (confirm('האתגר קיבל 3 סימונים. למחוק?')) {
+        await db.ref('library/' + id).remove();
+        libraryItems = libraryItems.filter(i => i.id !== id);
+        filterLibrary();
+        showNotif('🗑 האתגר נמחק');
+      }
+    } else {
+      await db.ref('library/' + id + '/flags').set(flags);
+      showNotif(`⚑ סומן כחלש (${flags}/3)`);
+    }
+  } catch(e) { alert('שגיאה'); }
+}
+
+async function deleteFromLibrary(id) {
+  if (!confirm("למחוק את האתגר הזה מהספרייה?")) return;
+  try {
+    await db.ref("library/" + id).remove();
+    libraryItems = libraryItems.filter(i => i.id !== id);
+    filterLibrary();
+  } catch(e) { alert("שגיאה במחיקה"); }
+}
+
+let _editingLibId = null;
+function editFromLibrary(id) {
+  const item = libraryItems.find(i => i.id === id);
+  if (!item) return;
+  _editingLibId = id;
+  document.getElementById('edit-lib-name').value = item.name || '';
+  document.getElementById('edit-lib-subject').value = item.subject || '';
+  document.getElementById('edit-lib-model').value = item.model || item.challengeModel || 'physical';
+  document.getElementById('edit-lib-grades').value = item.grades || '';
+  document.getElementById('edit-lib-topic').value = item.topic || '';
+  document.getElementById('edit-lib-challenge').value = item.challenge || '';
+  document.getElementById('edit-lib-modal').style.display = 'flex';
+}
+
+function closeEditModal() {
+  document.getElementById('edit-lib-modal').style.display = 'none';
+  _editingLibId = null;
+}
+
+async function saveLibraryEdit() {
+  const id = _editingLibId;
+  if (!id) return;
+  const newName = document.getElementById('edit-lib-name').value.trim();
+  const newChallenge = document.getElementById('edit-lib-challenge').value.trim();
+  if (!newChallenge) return;
+  try {
+    const newSubject = document.getElementById('edit-lib-subject').value.trim();
+    const newModel = document.getElementById('edit-lib-model').value;
+    const newGrades = document.getElementById('edit-lib-grades').value.trim();
+    const newTopic = document.getElementById('edit-lib-topic').value.trim();
+    await db.ref('library/' + id).update({ name: newName, subject: newSubject, model: newModel, challengeModel: newModel, grades: newGrades, topic: newTopic, challenge: newChallenge, updatedAt: Date.now() });
+    const idx = libraryItems.findIndex(i => i.id === id);
+    if (idx !== -1) { libraryItems[idx].name = newName; libraryItems[idx].subject = newSubject; libraryItems[idx].model = newModel; libraryItems[idx].challengeModel = newModel; libraryItems[idx].grades = newGrades; libraryItems[idx].topic = newTopic; libraryItems[idx].challenge = newChallenge; }
+    filterLibrary();
+    closeEditModal();
+    showNotif('✅ האתגר עודכן');
+  } catch(e) { alert('שגיאה בעדכון'); }
+}
+
+async function useFromLibrary(id) {
+  const item = libraryItems.find(i => i.id === id);
+  if (!item) return;
+
+  // צור חדר קודם
+  const code = genCode();
+  const roomData = {
+    code,
+    topic: item.topic || item.subject || '',
+    mode: 1,
+    teacherChallenge: item.challenge,
+    teacherUid: currentUser.uid,
+    status: 'waiting',
+    createdAt: Date.now(),
+    students: {}
+  };
+
+  currentRoom = { code, ...roomData };
+
+  if (db) {
+    try { await db.ref('rooms/' + code).set(roomData); } catch(e) {}
+    listenToRoom(code);
+  }
+
+  // הצג חדר המתנה עם קישור
+  document.getElementById('room-code-display').textContent = code;
+  updateStudentLink(code);
+  go('teacher-waiting');
+  listenToStudents(code);
+
+  // שמור את האתגר לשליחה
+  currentRoom.generatedChallenge = item.challenge;
+  currentRoom.challengeName = item.name;
+}
+
+async function assignGroups() {
+  if (!db || !currentRoom) { showNotif('אין חיבור'); return; }
+  
+  try {
+    const snap = await db.ref('rooms/' + currentRoom.code + '/students').get();
+    const students = snap.val() || {};
+    const sids = Object.keys(students);
+    
+    if (sids.length === 0) { showNotif('אין תלמידים עדיין'); return; }
+    
+    const shuffled = sids.sort(() => Math.random() - 0.5);
+    const updates = {};
+    shuffled.forEach((sid, i) => {
+      const idx = i % GROUP_NAMES.length;
+      updates[sid + '/group'] = GROUP_NAMES[idx];
+      updates[sid + '/groupColor'] = GROUP_COLORS[idx];
+    });
+    
+    await db.ref('rooms/' + currentRoom.code + '/students').update(updates);
+    await db.ref('rooms/' + currentRoom.code).update({ grouped: true });
+    
+    showNotif('✅ קבוצות עורבבו מחדש');
+  } catch(e) { showNotif('שגיאה — נסה שוב'); }
+}
+
+async function sendChallenge() {
+  const finalChallenge = document.getElementById('edit-challenge').value.trim() || currentRoom.generatedChallenge;
+  currentRoom.finalChallenge = finalChallenge;
+
+  if (db && currentRoom) {
+    try {
+      await db.ref('rooms/' + currentRoom.code).update({ 
+        challenge: finalChallenge, 
+        status: 'active', 
+        startedAt: Date.now(),
+        duration: currentRoom.duration || '5 דק׳'
+      });
+    } catch(e) {}
+  }
+
+  // שמור אתגר מאושר למאגר הלמידה
+  await saveApprovedChallenge(finalChallenge);
+  // עדכן היסטוריית מורה
+  await saveTeacherChallengeHistory(finalChallenge);
+}
+
+async function saveApprovedChallenge(challengeText) {
+  if (!db || !currentRoom) return;
+  const subject = currentUser?.profile?.subject || localStorage.getItem('pandora_subject_' + (currentUser?.name || '')) || '';
+  const mode = currentRoom.mode || 2;
+  const topic = currentRoom.topic || '';
+  const parsed = parseChallenge(challengeText);
+  try {
+    const grades = currentUser?.profile?.grades || localStorage.getItem('pandora_grades_' + (currentUser?.name || '')) || '';
+    await db.ref('approved_challenges').push({
+      name: parsed.challengeName || '',
+      challenge: parsed.challengeText || challengeText,
+      subject, topic, mode, grades,
+      approvedAt: Date.now()
+    });
+  } catch(e) {}
+}
+
+async function saveTeacherChallengeHistory(challengeText) {
+  if (!db || !currentUser?.uid || currentUser.uid === 'demo') return;
+  const parsed = parseChallenge(challengeText);
+  const entry = {
+    name: parsed.challengeName || '',
+    topic: currentRoom?.topic || '',
+    savedAt: Date.now()
+  };
+  try {
+    await db.ref('teachers/' + currentUser.uid + '/challengeHistory').push(entry);
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════
+// TEACHER MONITOR
+// ══════════════════════════════════════════
+function listenToGroupProgress(code) {
+  if (!db) return;
+  db.ref('rooms/' + code + '/students').on('value', snap => {
+    const students = snap.val() || {};
+    const done = Object.values(students).filter(s => s.submitted).map(s => s.name);
+    const field = Object.values(students).filter(s => !s.submitted).map(s => s.name);
+
+    const fieldEl = document.getElementById('groups-field');
+    const doneEl = document.getElementById('groups-done');
+
+      // קבץ לפי קבוצות
+    const groupMap = {};
+    Object.values(students).forEach(s => {
+      if (!s.group) return;
+      if (!groupMap[s.group]) groupMap[s.group] = { color: s.groupColor || 'var(--accent)', members: [], done: 0 };
+      groupMap[s.group].members.push(s);
+      if (s.submitted) groupMap[s.group].done++;
+    });
+
+    if (fieldEl) fieldEl.innerHTML = Object.entries(groupMap)
+      .filter(([g, d]) => d.done < d.members.length)
+      .map(([g, d]) => `<div style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:6px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:${d.color};flex-shrink:0;display:inline-block;"></span>
+        <span style="font-size:13px;font-weight:700;">${g}</span>
+        <span style="font-size:11px;color:var(--text3);">${d.done}/${d.members.length}</span>
+      </div>`).join('') || '<div style="font-size:12px;color:var(--text3);">—</div>';
+
+    if (doneEl) doneEl.innerHTML = Object.entries(groupMap)
+      .filter(([g, d]) => d.done === d.members.length && d.members.length > 0)
+      .map(([g, d]) => `<div style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:6px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:${d.color};flex-shrink:0;display:inline-block;"></span>
+        <span style="font-size:13px;font-weight:700;color:var(--teal);">${g} ✓</span>
+      </div>`).join('') || '<div style="font-size:12px;color:var(--text3);">—</div>';
+  });
+}
+
+function startTeacherTimer() {
+  clearInterval(timerInterval);
+  const duration = parseDuration(currentRoom?.duration || '5 דק׳');
+  
+  if (duration === 0) {
+    const el = document.getElementById('t-timer');
+    if (el) el.textContent = '∞';
+    return;
+  }
+  
+  timerSecs = duration;
+  timerInterval = setInterval(() => {
+    timerSecs--;
+    if (timerSecs < 0) { clearInterval(timerInterval); endSession(); return; }
+    const el = document.getElementById('t-timer');
+    if (el) el.textContent = fmt(timerSecs);
+  }, 1000);
+}
+
+function parseDuration(str) {
+  if (!str || str === 'ללא הגבלה') return 0; // 0 = ללא הגבלה
+  const match = str.match(/(\d+)/);
+  return match ? parseInt(match[1]) * 60 : 300;
+}
+
+async function endSession() {
+  clearInterval(timerInterval);
+  if (db && currentRoom) db.ref('rooms/' + currentRoom.code).update({ status: 'voting' });
+  await renderResults();
+  go('teacher-results');
+}
+
+async function renderResults() {
+  const colors = ['var(--accent)','var(--pink)','var(--teal)','var(--amber)','var(--red)'];
+  let groups = [];
+  if (db && currentRoom?.code) {
+    try {
+      const snap = await db.ref('rooms/' + currentRoom.code + '/students').get();
+      const students = Object.values(snap.val() || {});
+      const total = {}, submitted = {};
+      students.forEach(s => {
+        if (!s.group) return;
+        total[s.group] = (total[s.group] || 0) + 1;
+        if (s.submitted) submitted[s.group] = (submitted[s.group] || 0) + 1;
+      });
+      groups = Object.keys(total)
+        .map(name => ({ name, pct: Math.round((submitted[name] || 0) / total[name] * 100) }))
+        .sort((a, b) => b.pct - a.pct);
+      document.getElementById('res-participants').textContent = students.length;
+      document.getElementById('res-groups').textContent = groups.length;
+    } catch(e) {}
+  }
+  if (!groups.length) return;
+  document.getElementById('results-scores').innerHTML = groups.map((s, i) =>
+    `<div class="score-row">
+      <span class="score-lbl">${s.name}</span>
+      <div class="score-track"><div class="score-fill" style="width:${s.pct}%;background:${colors[i % colors.length]};"></div></div>
+      <span class="score-pct" style="color:${colors[i % colors.length]};">${s.pct}%</span>
+    </div>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════
+// STUDENT FLOW
+// ══════════════════════════════════════════
+async function studentJoin() {
+  hideErr('join-err');
+  const code = document.getElementById('s-code').value.trim().toUpperCase();
+  const name = document.getElementById('s-name').value.trim();
+  if (!code || !name) { showErr('join-err', 'הזן קוד ושם'); return; }
+
+  currentUser = { type: 'student', name, code };
+
+  if (db) {
+    try {
+      const snap = await db.ref('rooms/' + code).get();
+      if (!snap.exists()) { showErr('join-err', 'קוד לא נמצא'); return; }
+      const room = snap.val();
+      if (room.status === 'closed') { showErr('join-err', 'החדר סגור'); return; }
+      const sid = db.ref('rooms/' + code + '/students').push().key;
+      currentUser.sid = sid;
+      try { await db.ref('rooms/' + code + '/students/' + sid).set({ name, joinedAt: Date.now(), q1: '', q2: '', q3: '' }); } catch(e) {}
+      currentRoom = { code, ...room };
+
+      // שיבוץ אוטומטי לקבוצה לפי גודל קטן ביותר
+      try {
+        const allSnap = await db.ref('rooms/' + code + '/students').get();
+        const allStudents = allSnap.val() || {};
+        const groupSizeStr = room.groupSize || '4–5';
+        const maxPerGroup = parseInt((groupSizeStr.split(/[-–]/).pop()) || '5') || 5;
+        const groupCounts = {};
+        GROUP_NAMES.forEach(g => groupCounts[g] = 0);
+        Object.values(allStudents).forEach(s => {
+          if (s.group && groupCounts.hasOwnProperty(s.group)) groupCounts[s.group]++;
+        });
+        // בחר קבוצה: עדיפות לקבוצות עם חברים קיימים (לא יחיד)
+        const existingGroups = GROUP_NAMES.filter(g => groupCounts[g] > 0 && groupCounts[g] < maxPerGroup);
+        const emptyGroups = GROUP_NAMES.filter(g => groupCounts[g] === 0);
+        let assignedGroup;
+        if (existingGroups.length > 0) {
+          // הצטרף לקבוצה הכי קטנה עם חברים קיימים
+          assignedGroup = existingGroups.reduce((a, b) => groupCounts[a] <= groupCounts[b] ? a : b);
+        } else {
+          // כל הקבוצות ריקות — פתח קבוצה חדשה
+          assignedGroup = emptyGroups[0] || GROUP_NAMES[0];
+        }
+        const groupIdx = GROUP_NAMES.indexOf(assignedGroup);
+        await db.ref('rooms/' + code + '/students/' + sid).update({
+          group: GROUP_NAMES[groupIdx],
+          groupColor: GROUP_COLORS[groupIdx]
+        });
+      } catch(e) {}
+
+    } catch(e) { showErr('join-err', 'שגיאת חיבור — נסה שוב'); return; }
+  }
+
+  go('student-waiting');
+  listenForGroup();
+  listenForChallenge();
+}
+
+function listenForGroup() {
+  if (!db || !currentUser.sid || !currentRoom?.code) return;
+  db.ref('rooms/' + currentRoom.code + '/students/' + currentUser.sid).on('value', snap => {
+    const studentData = snap.val() || {};
+    const group = studentData.group;
+    if (group) {
+      currentUser.groupName = group;
+      const groupColor = studentData.groupColor || '#6C63FF';
+      currentUser.groupColor = groupColor;
+      document.getElementById('s-group-name').textContent = group;
+      document.getElementById('s-group-name').style.color = groupColor;
+      const colorBanner = document.getElementById('s-color-banner');
+      if (colorBanner) { colorBanner.style.background = groupColor; colorBanner.style.display = 'block'; }
+      const badge = document.getElementById('s-team-badge');
+      if (badge) { badge.textContent = '⚡ ' + group; badge.style.background = groupColor; }
+      const groupDisplay = document.getElementById('s-group-display');
+      if (groupDisplay) { groupDisplay.style.color = groupColor; }
+      loadGroupMembers();
+    } else {
+      document.getElementById('s-group-name').textContent = 'ממתין לשיבוץ...';
+      document.getElementById('s-group-name').style.color = 'var(--text3)';
+      document.getElementById('s-group-name').style.fontSize = '18px';
+    }
+  });
+}
+
+async function loadGroupMembers() {
+  if (!db || !currentRoom?.code) return;
+  try {
+    const snap = await db.ref('rooms/' + currentRoom.code + '/students').get();
+    const students = snap.val() || {};
+    const myGroup = currentUser.groupName;
+    const members = Object.entries(students)
+      .filter(([sid, s]) => s.group === myGroup)
+      .map(([sid, s]) => ({ name: s.name, isMe: sid === currentUser.sid }));
+    const membersEl = document.getElementById('s-group-members');
+    if (membersEl) membersEl.innerHTML = members.map(m =>
+      `<div style="background:${m.isMe ? 'rgba(168,50,50,.15)' : 'var(--surface2)'};border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;${m.isMe ? 'border:1px solid rgba(168,50,50,.3);' : ''}">
+        <div style="font-size:15px;font-weight:700;">${m.name}${m.isMe ? ' (אתה)' : ''}</div>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+
+function listenForChallenge() {
+  if (!db) {
+    setTimeout(() => {
+      const challenge = currentRoom?.finalChallenge || 'צאו לחצר ומצאו שלושה חפצים שמסמלים דברים שונים עבורכם. בנו מהם "פסל קהילה" ותעדו בוידאו 30 שניות.';
+      receiveChallenge(challenge);
+    }, 3000);
+    return;
+  }
+  db.ref('rooms/' + currentRoom.code).on('value', snap => {
+    const room = snap.val();
+    if (!room) return;
+    if (room.challenge && room.status === 'active') {
+      currentRoom.startedAt = room.startedAt;
+      currentRoom.duration = room.duration;
+      receiveChallenge(room.challenge);
+    }
+  });
+}
+
+function receiveChallenge(challenge) {
+  const parsed = parseChallenge ? parseChallenge(challenge) : { challengeName: '', challengeText: challenge };
+  
+  currentRoom.finalChallenge = parsed.challengeText || challenge;
+  const submitChal = document.getElementById('s-submit-challenge');
+  if (submitChal) submitChal.textContent = parsed.challengeText || challenge;
+
+  const nameEl = document.getElementById('s-challenge-name');
+  if (nameEl) nameEl.textContent = parsed.challengeName || '';
+  document.getElementById('s-challenge-txt').textContent = parsed.challengeText || challenge;
+  const badge = document.getElementById('s-team-badge');
+  if (badge) badge.textContent = '⚡ ' + (currentUser.groupName || 'הקבוצה שלך');
+  const groupDisplay = document.getElementById('s-group-display');
+  if (groupDisplay) {
+    groupDisplay.textContent = currentUser.groupName || '';
+    if (currentUser.groupColor) {
+      groupDisplay.style.color = '#fff';
+      groupDisplay.style.background = currentUser.groupColor;
+    }
+  }
+
+  go('student-challenge');
+
+  // התחל טיימר מסונכרן
+  clearInterval(timerInterval);
+  const duration = parseDuration(currentRoom?.duration || '5 דק׳');
+  
+  if (duration === 0) {
+    // ללא הגבלה — הצג "∞" במקום טיימר
+    const t1 = document.getElementById('s-timer');
+    const t2 = document.getElementById('s-submit-timer');
+    if (t1) t1.textContent = '∞';
+    if (t2) t2.textContent = '∞';
+    return;
+  }
+
+  const startedAt = currentRoom?.startedAt || Date.now();
+  const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+  timerSecs = Math.max(0, duration - elapsed);
+
+  timerInterval = setInterval(() => {
+    timerSecs--;
+    if (timerSecs < 0) { clearInterval(timerInterval); go('student-submit'); return; }
+    const str = fmt(timerSecs);
+    const t1 = document.getElementById('s-timer');
+    const t2 = document.getElementById('s-submit-timer');
+    if (t1) { t1.textContent = str; t1.classList.toggle('urgent', timerSecs < 60); }
+    if (t2) { t2.textContent = str; t2.classList.toggle('urgent', timerSecs < 60); }
+  }, 1000);
+}
+
+
+async function submitProduct() {
+  if (db && currentUser.sid) {
+    try { await db.ref('rooms/' + currentRoom.code + '/students/' + currentUser.sid).update({ submitted: true }); } catch(e) {}
+  }
+  go('student-winner');
+}
+
+
+async function announceWinner() {
+  // מצא זוכה לפי הצבעות
+  if (!db) return;
+  const votesSnap = await db.ref('rooms/' + currentRoom.code + '/votes').get();
+  const votes = votesSnap.val() || {};
+  let winner = '';
+  let maxVotes = 0;
+  Object.entries(votes).forEach(([g, v]) => {
+    if (v > maxVotes) { maxVotes = v; winner = g.replace(/_/g, ' '); }
+  });
+  if (winner) {
+    try { await db.ref('rooms/' + currentRoom.code + '/winner').set(winner); } catch(e) {}
+    showNotif('🏆 ' + winner + ' — הזוכים!');
+    go('teacher-results');
+  }
+}
+
+</script>
+</body>
+</html>
