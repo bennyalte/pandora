@@ -1,9 +1,21 @@
+// ⚠️ תיקון-אבטחה: isAllowedOrigin משתמשת-בהשוואה-מדויקת/regex, לא-
+// substring-matching (.includes()) — נמצא-בפועל-שבדיקת-.includes() הישנה-
+// הייתה-ניתנת-לעקיפה-על-ידי-דומיין-תוקף-כמו-
+// "pandora-eight-inky.vercel.app.evil.com" (מכיל-את-המחרוזת-המקורית-כתת-
+// מחרוזת, אך-הוא-דומיין-זר-לגמרי) — אותה-מחלקת-באג-שתוקנה-מוקדם-יותר-
+// בניתוב-הנושאים (מגנטיות/נטיות), כאן-בהקשר-קריטי-לאבטחה.
+function isAllowedOrigin(origin) {
+  if (origin === 'https://pandora-eight-inky.vercel.app') return true;
+  if (/^http:\/\/localhost(:\d+)?$/.test(origin)) return true;
+  return false;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
   const origin = req.headers.origin || '';
-  if (!origin.includes('pandora-eight-inky.vercel.app') && !origin.includes('localhost')) {
+  if (!isAllowedOrigin(origin)) {
     return res.status(403).json({ error: 'Forbidden' });
   }
   const apiKey = process.env.ANTHROPIC_API_KEY;
