@@ -37,7 +37,9 @@ export default async function handler(req, res) {
     // זאת-במפורש (useWebSearch), לא-בכל-קריאה, כדי-לשמור-על-מהירות-ברירת-
     // המחדל לרוב-המקרים-שלא-דורשים-עיגון-עובדתי-חיצוני.
     if (useWebSearch) {
-      requestBody.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+      // ⚠️ (pkg44) max_uses:3 — מתועד-רשמית (platform.claude.com/docs — אומת-ישירות-מול-המקור, לא-ממצרפי-מחירים).
+      // נמצא-בפועל: ממוצע-6.8-חיפושים-לקריאה-בהדהוד, בלי-הגבלה-עד-כה. מגביל-עלות, בלי-לבטל-אימות-לגמרי.
+      requestBody.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }];
       requestBody.max_tokens = 2000;
     }
     const response = await fetch('https://api.anthropic.com/v1/messages', {
