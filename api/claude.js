@@ -10,6 +10,11 @@ function isAllowedOrigin(origin) {
   return false;
 }
 
+// ⚠️ (pkg72) בחירת-מודל-מהדפדפן — רק-מתוך-רשימה-סגורה. כל-ערך-אחר (או-חסר) → ברירת-המחדל.
+// בלי-הרשימה, כל-מי-שמגיע-לאתר-היה-יכול-לבקש-כל-מודל-על-חשבון-המפתח-של-השרת.
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
+const ALLOWED_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-6', 'claude-opus-5-5'];
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -23,9 +28,10 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API key not configured on server' });
   }
   try {
-    const { system, userPrompt, useWebSearch } = req.body;
+    const { system, userPrompt, useWebSearch, model } = req.body;
+    const chosenModel = ALLOWED_MODELS.includes(model) ? model : DEFAULT_MODEL;
     const requestBody = {
-      model: 'claude-sonnet-4-6',
+      model: chosenModel,
       max_tokens: 1500,
       system: system,
       messages: [{ role: 'user', content: userPrompt }]
